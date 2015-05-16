@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "CommonDefines.h"
+#include "commondefines.h"
 
 class P2PNetworkInterface {
 public:
