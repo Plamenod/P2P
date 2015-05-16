@@ -28,7 +28,7 @@ Socket::~Socket()
 }
 
 
-void Socket::bindTo(short port) const
+void Socket::bindTo(unsigned short port) const
 {
 	sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
@@ -47,5 +47,23 @@ void Socket::bindTo(short port) const
 		std::cerr << "Unsuccessful binding!\n";
 		exit(1);
 	}
+}
+
+
+void Socket::connectTo(const std::string& ip, unsigned short port) const
+{
+	sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = port;
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    if(server_addr.sin_addr.s_addr == (-1)) {
+        std::cerr << "Cannot connect to server !" << std::endl;
+        exit(1);
+    }
+
+    if(connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr))) {
+        std::cerr << "Cannot connect to server !" << std::endl;
+        exit(1);
+    }
 }
 
