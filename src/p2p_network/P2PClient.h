@@ -1,24 +1,25 @@
 #ifndef P2PCLIENT_H_INCLUDED
 #define P2PCLIENT_H_INCLUDED
 
-#include "p2p_network_interface.h"
+#include "Socket.h"
+#include <string>
 
-class P2PClient: public P2PNetworkInterface
+const unsigned short port = 7777;
+
+class P2PClient
 {
 public:
     P2PClient(){}
-    virtual ~P2PClient() override;
+    virtual ~P2PClient();
 
-    int start() const;
-    int connect() const;
-
-    virtual std::vector<PeerInfo> get_peers() const;
+    void start() const;
+    void connectTo(const std::string& server_address) const;
 
     P2PClient(const P2PClient&) = delete;
     P2PClient& operator=(const P2PClient&) = delete;
 
 private:
-
+    Socket socket;
 };
 
 #endif // P2PCLIENT_H_INCLUDED
