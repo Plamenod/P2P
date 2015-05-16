@@ -1,9 +1,6 @@
 #ifndef SOCKET_H_
 #define SOCKET_H_
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
 #define PROTOCOL 0
 #define INVALID_SOCKFD -1
@@ -19,11 +16,12 @@ public:
 	Socket(const Socket& other) = delete;
 	Socket& operator =(const Socket& other) = delete;
 
-	~Socket() { close(fd); };
+	~Socket();
 
 	operator int() const { return fd; };
+	int getFd() const { return fd; };
 
-	int bind(short port);
+	void bindTo(short port) const;
 
 private:
 	int fd;
