@@ -72,8 +72,10 @@ uint64_t FileClient::send(
         }
     }
 
+    uint64_t fileID = getFileID(host_socket);
+
     fclose(file_to_send);
-    return true;
+    return fileID;
 }
 
 bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
@@ -93,7 +95,12 @@ uint64_t FileClient::getFileID(const Socket& host_socket) {
     server_info = host_socket.accept();
 
     uint64_t file_id;
-//    read(server_info, &file_id, sizeof(uint64_t));
+    int file_read = read(server_info.sock_fd, &file_id, sizeof(uint64_t));
+
+    if(file_read == -1) {
+        std::cerr << "Failed to read from socket" << std::endl;
+        return 0;
+    }
 
     return file_id;
 }
