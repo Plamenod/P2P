@@ -21,41 +21,45 @@
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
 using namespace std;
-FileServer::FileServer() {
-	// TODO Auto-generated constructor stub
-
+FileServer::FileServer() : buffer(unique_ptr<char[]>( new char[SIZE_BUFFER])) {
 }
 
-bool FileServer::receive(unsigned short host_port){
-
-   // char buffer [256]; // TODO remove it as a member
+bool FileServer::receive(unsigned short host_port) {
 
     Socket socket;
     socket.bindTo(host_port);
 
     listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 
-    socklen_t clilen;
-    sockaddr_in cli_addr;
 
-    int  newsockfd = accept( socket, (struct sockaddr *) &cli_addr, &clilen);
+    int  newsockfd = accept( socket, nullptr,nullptr);
 
     if (newsockfd < 0) {
         std::cerr << "ERROR on accept\n";
         exit(1);  // TODO remove it
     }
-    bzero(buffer, SIZE);
-    int n = -1;
-     while(n = read(newsockfd,buffer,SIZE - 1))
-     {
-        std::cout << "Super Lubiiii "<< n << std::endl;
-        printf("Here is the message: %s\n",buffer);
-        scanf("%s", buffer);
-        n = write(newsockfd,buffer,18);
-        printf("bytes %d\n", n);
-        if (n < 0) std::cerr << "ERROR writing to socket";
+
+    bzero(buffer.get(), SIZE_BUFFER);
+
+    int readed_bytes = -1;
+    uint64_t size_of_file;
+
+    read(newsockfd, &size_of_file, sizeof(uint64_t));
+
+    printf("size_of_file: %ld\n", size_of_file);
+
+    while(readed_bytes = read(newsockfd, buffer.get(), SIZE_BUFFER - 1)) {
+
+        printf("Here is the message: %s\n", buffer.get());
+        scanf("%s", buffer.get());
+        readed_bytes = write(newsockfd, buffer.get(),SIZE_BUFFER);
+        printf("bytes %d\n", readed_bytes);
      }
-    std::cout << "Lubiiii "<< n << std::endl;
-    return false/*TODO*/;
+
+     if (readed_bytes < 0) {
+        std::cerr << "ERROR writing to socket";
+     }
+
+    return true/*TODO*/;
 }
 

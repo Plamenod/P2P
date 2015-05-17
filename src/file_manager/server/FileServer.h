@@ -12,7 +12,8 @@
 #include <cstdint>
 #include "file_manager_interface.h"
 
-#define SIZE 100
+#define SIZE_BUFFER 4000
+#include <memory>
 
 class FileServer {
 public:
@@ -21,7 +22,7 @@ public:
     virtual bool receive( unsigned short host_port);
 
 private:
-    uint8_t buffer[SIZE];
+    std::unique_ptr<char[]> buffer;
 };
 
 #endif /* SRC_FILE_MANAGER_SERVER_FILESERVER_H_ */
