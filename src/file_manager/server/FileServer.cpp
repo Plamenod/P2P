@@ -53,21 +53,19 @@ bool FileServer::receive(unsigned short host_port) {
 
 
     int readed_bytes = -1;
-    while(readed_bytes = read(newsockfd, buffer.get(), SIZE_BUFFER - 1)) {
-
+    bzero(buffer.get(), SIZE_BUFFER); // TODO remove to append_to_file, after appended it
+    while(info.size_of_file) {
+        readed_bytes = read(newsockfd, buffer.get(), SIZE_BUFFER - 1);
         printf("Here is the message: %s\n", buffer.get());
 
-
-        scanf("%s", buffer.get());
-        readed_bytes = write(newsockfd, buffer.get(),SIZE_BUFFER);
         printf("bytes %d\n", readed_bytes);
+        info.size_of_file -= readed_bytes;
+    }
+    write(newsockfd, &info.id, sizeof(uint64_t));
 
-        bzero(buffer.get(), SIZE_BUFFER); // TODO remove to append_to_file, after appended it
-     }
-
-     if (readed_bytes < 0) {
+    if (readed_bytes < 0) {
         std::cerr << "ERROR writing to socket";
-     }
+    }
     return true/*TODO*/;
 }
 
