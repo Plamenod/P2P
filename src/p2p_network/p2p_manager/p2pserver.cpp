@@ -1,9 +1,16 @@
 #include "p2pserver.h"
 
-#define PORT 6666
+const unsigned int BUFFERSIZE = 1024;
 
 void P2PServer::start() const
 {
-	this->socket.bindTo(PORT);
+	this->socket.bindTo(port);
+
 }
 
+void P2PServer::run() const
+{
+    while(true) {
+
+    }
+}
