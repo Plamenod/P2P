@@ -2,6 +2,7 @@
 #define FILECLIENT_H_
 #include "file_manager_interface.h"
 #include "socket.h"
+#include <utility>
 
 class FileClient : public FileManagerInterface{
 public:
@@ -22,14 +23,24 @@ private:
     * @brief send length of file
     * @param host_socket socket to send length
     * @param length length to send
+    * @return true on success, false on failure
     */
     bool sendLength(const Socket& host_socket, uint64_t length);
 
     /**
     * @brief get file ID from host_socket
     * @param host_socket socket to receive ID from
+    * @return 0 on failure
     */
     uint64_t getFileID(const Socket& host_socket);
+
+    /**
+    * @return host and port
+    */
+    std::pair<std::string, unsigned short> getHostAndPort(const std::string& host);
+
+
+    std::vector<std::string> split(std::string str, const char* delimiter);
 };
 
 #endif /* FILECLIENT_H_ */

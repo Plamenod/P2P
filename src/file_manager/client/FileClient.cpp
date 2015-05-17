@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <memory>
+#include <sstream>
 
 FileClient::FileClient() {
 
@@ -29,7 +30,9 @@ uint64_t FileClient::send(
     Socket host_socket;
     host_socket.connectTo(host, host_port);
 
-    sendLength(host_socket, data_length);
+    if(!sendLength(host_socket, data_length)) {
+        std::cerr << "Failed to send file of length - " << data_length << std::endl;
+    }
 
     FILE* file_to_send;
     file_to_send = fopen(file_path.c_str(), "r");
@@ -83,7 +86,6 @@ bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
     int byte_sent = write(host_socket.getFd(), &length, sizeof(uint64_t));
 
     if(byte_sent == -1) {
-        std::cerr << "Failed to send file of length - " << length << std::endl;
         return false;
     }
     return true;
@@ -105,4 +107,26 @@ uint64_t FileClient::getFileID(const Socket& host_socket) {
     return file_id;
 }
 
+std::pair<std::string, unsigned short> FileClient::getHostAndPort(const std::string& host) {
+    std::vector<std::string> hostAndPort = split(host, ":");
+
+    std::pair<std::string, unsigned short> host_port;
+
+    host_port.first = hostAndPort[0];
+    host_port.second = strtoul(hostAndPort[1].c_str(), nullptr, 10);
+
+    return host_port;
+}
+
+std::vector<std::string> FileClient::split(std::string str, const char* delimiter) {
+    std::vector<std::string> internal;
+    std::stringstream ss(str);
+    std::string tok;
+
+    while(getline(ss, tok, delimiter[0])) {
+        internal.push_back(tok);
+    }
+
+    return internal;
+}
 
