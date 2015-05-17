@@ -1,5 +1,4 @@
 #include "FileClient.h"
-#include "socket.h"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -20,15 +19,17 @@ bool FileClient::send(
     uint64_t from,
     uint64_t to)
 {
-    int data_length = to - from;
+    uint64_t data_length = to - from;
 
     if(data_length <= 0) {
         std::cerr << "Length is <= 0" << std::endl;
         return false;
     }
 
-    Socket host_sock;
-    host_sock.connectTo(host, host_port);
+    Socket host_socket;
+    host_socket.connectTo(host, host_port);
+
+    sendLength(host_socket, data_length);
 
     FILE* file_to_send;
     file_to_send = fopen(file_path.c_str(), "r");
@@ -55,7 +56,7 @@ bool FileClient::send(
         return false;
     }
 
-    int bytes_sent = write(host_sock.getFd(), buffer.get(), strlen(buffer.get()));
+    int bytes_sent = write(host_socket.getFd(), buffer.get(), strlen(buffer.get()));
 
     if(bytes_sent == -1) {
         std::cerr << "Failed to write to socket" << std::endl;
@@ -64,5 +65,16 @@ bool FileClient::send(
     }
 
     fclose(file_to_send);
+    return true;
+}
+
+bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
+
+    int byte_sent = write(host_socket.getFd(), &length, sizeof(uint64_t));
+
+    if(byte_sent == -1) {
+        std::cerr << "Failed to send file of length - " << length << std::endl;
+        return false;
+    }
     return true;
 }
