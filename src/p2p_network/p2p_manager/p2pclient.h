@@ -27,13 +27,14 @@ public:
 
     void setServerIP(const std::string& ip);
 
-    void connectToServer(const std::string& ip, uint16_t port = CLIENT_PORT);
+    void connectToServer(const std::string& ip);
     void getPeersInfo(std::vector<PeerInfo>& result) const;
 
 private:
     size_t send(const void* buf, size_t size, int flags = 0) const;
     size_t recv(void* buf, size_t size, int flags = 0) const;
     void receivePeersInfo(std::vector<PeerInfo>& result) const;
+    void sendListeningPort()const;
 
     Socket socket;
     uint16_t client_port;

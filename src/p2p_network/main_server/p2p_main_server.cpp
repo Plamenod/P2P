@@ -2,6 +2,8 @@
 
 #include <cstring>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 void P2PMainServer::start()
 {
@@ -17,15 +19,18 @@ void P2PMainServer::start()
 	memset(buffer, 0, sizeof(buffer));
 
 	while(true){
+	    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		ClientInfo current_client = this->socket.accept();
 		handleClientConnect(current_client);
 		serveConnectedClients(buffer);
 	}
 }
 
-void P2PMainServer::handleClientConnect(const ClientInfo& client)
+void P2PMainServer::handleClientConnect(ClientInfo& client)
 {
     if(client.sock_fd != INVALID_SOCKFD){
+        client.connected = true;
+        client.server_port = 0;
         this->clients.push_back(client);
     }
 }

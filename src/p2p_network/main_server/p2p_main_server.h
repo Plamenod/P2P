@@ -24,7 +24,7 @@ public:
     void start();
 
 private:
-	void handleClientConnect(const ClientInfo& client);
+	void handleClientConnect(ClientInfo& client);
 	void serveConnectedClients(char* in_buffer);
 
 	Socket socket;

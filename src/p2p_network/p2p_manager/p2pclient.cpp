@@ -10,17 +10,19 @@
 #include <sstream>
 
 const int retries = 10;
-const uint32_t BUFFERSIZE_W = 16384; /// default send size
+const uint32_t IN_BUFFERSIZE = 16384; /// default send size
+const uint32_t OUT_BUFFERSIZE = 4096;
 
 void P2PClient::setServerIP(const std::string& ip)
 {
-    //server_ip = ip;
+    server_ip = ip;
 }
 
-void P2PClient::connectToServer(const std::string& ip, uint16_t port)
+void P2PClient::connectToServer(const std::string& ip)
 {
     setServerIP(ip);
-    socket.connectTo(ip, port);
+    socket.connectTo(ip, client_port);
+    sendListeningPort();
 }
 
 size_t P2PClient::send(const void* buf, size_t size, int flags) const
@@ -33,9 +35,22 @@ size_t P2PClient::recv(void* buf, size_t size, int flags) const
     return ::recv(socket.getFd(), buf, size, flags);
 }
 
+void P2PClient::sendListeningPort() const
+{
+    char cmd = Command::LISTENING_PORT;
+    char out_buff[OUT_BUFFERSIZE], *buff_ptr = out_buff;
+    out_buff[0] = cmd;
+    memcpy(out_buff + 1, &server_port, sizeof(server_port));
+    size_t sent = send(out_buff, sizeof(cmd) + sizeof(server_port));
+    if(sent <= 0) {
+        std::cerr << "Sending listening port failed" << std::endl;
+    }
+        exit(1);
+}
+
 void P2PClient::getPeersInfo(std::vector<PeerInfo>& result) const
 {
-    char cmd = GET_PEERS;
+    char cmd = Command::GET_PEERS;
     size_t sent;
     for(int i = 0; i < retries; ++i) {
         sent = send(&cmd, sizeof(cmd));
@@ -56,8 +71,8 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     size_t received;
-    char buffer[BUFFERSIZE_W], *buff_ptr = buffer;
-    received = recv(buffer, BUFFERSIZE_W);
+    char buffer[IN_BUFFERSIZE], *buff_ptr = buffer;
+    received = recv(buffer, IN_BUFFERSIZE);
     if(received <= 0) {
         std::cerr << "No connection to main server(receiving peers info)" << std::endl;
         exit(1);
