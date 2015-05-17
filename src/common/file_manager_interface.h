@@ -7,6 +7,7 @@
 
 class FileManagerInterface {
 public:
+
 	virtual uint64_t send(
 		const std::string & host,
 		const unsigned short host_port,
