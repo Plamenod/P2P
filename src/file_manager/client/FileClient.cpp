@@ -12,7 +12,7 @@ FileClient::~FileClient() {
 
 }
 
-bool FileClient::send(
+uint64_t FileClient::send(
     const std::string & host,
     const unsigned short host_port,
     std::string & file_path,
@@ -23,7 +23,7 @@ bool FileClient::send(
 
     if(data_length <= 0) {
         std::cerr << "Length is <= 0" << std::endl;
-        return false;
+        return 0;
     }
 
     Socket host_socket;
@@ -37,31 +37,39 @@ bool FileClient::send(
     if(!file_to_send) {
         std::cerr << "Failed to open file to send" << std::endl;
         fclose(file_to_send);
-        return false;
+        return 0;
     }
 
     if(fseek(file_to_send, from, SEEK_SET)) {
         std::cerr << "Failed to seek to position " << from << std::endl;
         fclose(file_to_send);
-        return false;
+        return 0;
     }
 
-    std::unique_ptr<char[]> buffer(new char[data_length]);
 
-    fread(buffer.get(), sizeof(char), data_length, file_to_send);
+//    std::unique_ptr<char[]> buffer(new char[data_length]);
+    std::unique_ptr<char> buffer(new char);
 
-    if(ferror(file_to_send)) {
-        std::cerr << "Failed to read file" << std::endl;
-        fclose(file_to_send);
-        return false;
-    }
+    while(fread(buffer.get(), sizeof(char), 1, file_to_send)) {
+        if(ferror(file_to_send)) {
+            std::cerr << "Failed to read file" << std::endl;
+            fclose(file_to_send);
+            return 0;
+        }
 
-    int bytes_sent = write(host_socket.getFd(), buffer.get(), strlen(buffer.get()));
+//        std::cout << buffer.get();
 
-    if(bytes_sent == -1) {
-        std::cerr << "Failed to write to socket" << std::endl;
-        fclose(file_to_send);
-        return false;
+        int bytes_sent = write(host_socket.getFd(), buffer.get(), strlen(buffer.get()));
+
+        if(bytes_sent == -1) {
+            std::cerr << "Failed to write to socket" << std::endl;
+            fclose(file_to_send);
+            return 0;
+        }
+
+        if(feof(file_to_send)) {
+            break;
+        }
     }
 
     fclose(file_to_send);
@@ -78,3 +86,16 @@ bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
     }
     return true;
 }
+
+uint64_t FileClient::getFileID(const Socket& host_socket) {
+    ClientInfo server_info;
+    host_socket.listen();
+    server_info = host_socket.accept();
+
+    uint64_t file_id;
+//    read(server_info, &file_id, sizeof(uint64_t));
+
+    return file_id;
+}
+
+

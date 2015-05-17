@@ -8,7 +8,7 @@ public:
 	FileClient();
 	virtual ~FileClient();
 
-    bool send(
+    uint64_t send(
         const std::string & host,
         const unsigned short host_port,
         std::string & file_path,
@@ -17,6 +17,7 @@ public:
 
 private:
     bool sendLength(const Socket& host_socket, uint64_t length);
+    uint64_t getFileID(const Socket& host_socket);
 };
 
 #endif /* FILECLIENT_H_ */
