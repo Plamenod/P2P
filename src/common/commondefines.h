@@ -5,8 +5,8 @@
 #include <netinet/in.h>
 
 struct PeerInfo {
-    std::string address;
-    bool connected;
+	std::string address;
+	bool connected;
 };
 
 
