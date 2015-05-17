@@ -6,12 +6,15 @@
 
 class FileManagerInterface {
 public:
-	virtual bool send(
-                const std::string & host,
-                const unsigned short host_port,
-                std::string & file_path,
-                uint64_t from = 0,
-                uint64_t to = -1) = 0;
+	virtual uint64_t send(
+		const std::string & host,
+		const unsigned short host_port,
+		std::string & file_path,
+		uint64_t from = 0,
+		uint64_t to = -1) = 0;
+
+	virtual std::std::vector<uint64_t> getIds() = 0;
+
 	virtual ~FileManagerInterface(){};
 };
 

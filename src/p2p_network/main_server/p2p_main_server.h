@@ -4,10 +4,12 @@
 #include "socket.h"
 #include "commondefines.h"
 
+#include <utility>
 #include <vector>
 
 #define MSPORT 3695
 #define INITIAL_CLIENTS_COUNT 64
+#define BUFFER_SIZE 16384
 
 class P2PMainServer{
 
@@ -22,6 +24,8 @@ public:
     void start();
 
 private:
+	//std::vector< pair<int, short> > getConnectedPeers();
+
 	Socket socket;
 	short port;
 	std::vector<ClientInfo> clients;
