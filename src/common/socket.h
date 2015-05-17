@@ -1,6 +1,9 @@
 #ifndef SOCKET_H_
 #define SOCKET_H_
 
+
+#include "commondefines.h"
+
 #include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -29,9 +32,10 @@ public:
 	void connectTo(const std::string& ip, unsigned short port) const;
 
 	void addOption(int option = SO_REUSEADDR);
+	void makeNonblocking() const;
 
-	bool listen_() const;
-	class client_info accept_() const;
+	bool listen() const;
+	ClientInfo accept() const;
 
 private:
 	int fd;

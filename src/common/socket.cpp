@@ -5,13 +5,8 @@
 #include <iostream>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
-
-
-struct client_info{
-	sockaddr_in addr;
-	int sock_fd;
-};
+#include <sys/fcntl.h>
+//#include <netinet/in.h>
 
 
 Socket::Socket(int fdesc) : fd(fdesc)
@@ -57,6 +52,7 @@ void Socket::connectTo(const std::string& ip, unsigned short port) const
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+
     if(server_addr.sin_addr.s_addr == (-1)) {
         std::cerr << "Cannot connect to server !" << std::endl;
         exit(1);
@@ -76,18 +72,27 @@ void Socket::addOption(int option)
 }
 
 
-bool Socket::listen_() const
+void Socket::makeNonblocking() const
 {
-	return (listen(this->fd, BACKLOG) == 0);
+	if(fcntl(this->fd, F_SETFL, O_NONBLOCK) == EWOULDBLOCK){
+		std::cerr << "Cannot make socket nonblocking!\n";
+		exit(1);
+	}
 }
 
 
-client_info Socket::accept_() const
+bool Socket::listen() const
 {
-	client_info info;
-	info.sock_fd = accept(this->fd, (sockaddr *) &info.addr, NULL);
+	return (::listen(this->fd, BACKLOG) == 0);
+}
 
-	if(info.sock_fd != INVALID_SOCKFD){
+
+ClientInfo Socket::accept() const
+{
+	ClientInfo info;
+	info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, NULL);
+
+	if(info.sock_fd != INVALID_SOCKFD || true){
         std::cerr << "Error accepting connection request!\n";
         exit(1);
 	}
