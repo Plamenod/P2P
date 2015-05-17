@@ -8,6 +8,8 @@ public:
 	FileClient();
 	virtual ~FileClient();
 
+    std::vector<uint64_t> getIds() override {};
+
     uint64_t send(
         const std::string & host,
         const unsigned short host_port,

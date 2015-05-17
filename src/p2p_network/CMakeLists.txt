@@ -1,0 +1,2 @@
+add_subdirectory(main_server)
+add_subdirectory(p2p_manager)
