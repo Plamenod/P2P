@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <vector>
 
 class FileManagerInterface {
 public:
@@ -13,7 +14,7 @@ public:
 		uint64_t from = 0,
 		uint64_t to = -1) = 0;
 
-	virtual std::std::vector<uint64_t> getIds() = 0;
+	virtual std::vector<uint64_t> getIds() = 0;
 
 	virtual ~FileManagerInterface(){};
 };
