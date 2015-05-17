@@ -44,6 +44,15 @@ void Socket::bindTo(unsigned short port) const
 		exit(1);
 	}
 
+
+    int yes = 1;
+    if (setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+        close(this->fd);
+        std::cerr << "Failed to setsockop SO_REUSEADDR\n";
+        exit(1);
+    }
+
+
 	if(bind(this->fd, (sockaddr *) &addr, sizeof(addr)) != 0){
 		std::cerr << "Unsuccessful binding!\n";
 		exit(1);
