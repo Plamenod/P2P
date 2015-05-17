@@ -18,8 +18,7 @@ Socket::Socket(int fdesc) : fd(fdesc)
 {
 	this->fd = socket(AF_INET, SOCK_STREAM, PROTOCOL);
 
-	if(this->fd < 0)
-	{
+	if(this->fd < 0){
 		std::cerr << "Cannot create socket !\n";
 		exit(1);
 	}
@@ -40,14 +39,12 @@ void Socket::bindTo(unsigned short port) const
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = inet_addr("0.0.0.0");
-	if(addr.sin_addr.s_addr == -1)
-	{
+	if(addr.sin_addr.s_addr == -1){
 		std::cerr << "Socket::bind_to : error converting address to int!\n";
 		exit(1);
 	}
 
-	if(bind(this->fd, (sockaddr *) &addr, sizeof(addr)) != 0)
-	{
+	if(bind(this->fd, (sockaddr *) &addr, sizeof(addr)) != 0){
 		std::cerr << "Unsuccessful binding!\n";
 		exit(1);
 	}
@@ -58,7 +55,7 @@ void Socket::connectTo(const std::string& ip, unsigned short port) const
 {
 	sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = port;
+    server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
     if(server_addr.sin_addr.s_addr == (-1)) {
         std::cerr << "Cannot connect to server !" << std::endl;
@@ -87,7 +84,13 @@ bool Socket::listen_() const
 
 client_info Socket::accept_() const
 {
-	//return accept(this->fd, )
-	client_info dummy;
-	return dummy;
+	client_info info;
+	info.sock_fd = accept(this->fd, (sockaddr *) &info.addr, NULL);
+
+	if(info.sock_fd != INVALID_SOCKFD){
+        std::cerr << "Error accepting connection request!\n";
+        exit(1);
+	}
+
+	return info;
 }
