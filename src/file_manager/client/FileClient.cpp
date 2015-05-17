@@ -50,7 +50,7 @@ bool FileClient::send(
     fread(buffer.get(), sizeof(char), data_length, file_to_send);
 
     if(ferror(file_to_send)) {
-        std::cerr << "Failed to write to socket" << std::endl;
+        std::cerr << "Failed to read file" << std::endl;
         fclose(file_to_send);
         return false;
     }
