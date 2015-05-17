@@ -5,12 +5,16 @@
 #include <iostream>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 
 
-Socket::Socket() : fd(INVALID_SOCKFD)
+struct client_info{
+	sockaddr_in addr;
+	int sock_fd;
+};
+
+
+Socket::Socket(int fdesc) : fd(fdesc)
 {
 	this->fd = socket(AF_INET, SOCK_STREAM, PROTOCOL);
 
@@ -67,3 +71,23 @@ void Socket::connectTo(const std::string& ip, unsigned short port) const
     }
 }
 
+
+void Socket::addOption(int option)
+{
+	int opt_val;
+	setsockopt(this->fd, SOL_SOCKET, option, &opt_val, sizeof(int));
+}
+
+
+bool Socket::listen_() const
+{
+	return (listen(this->fd, BACKLOG) == 0);
+}
+
+
+client_info Socket::accept_() const
+{
+	//return accept(this->fd, )
+	client_info dummy;
+	return dummy;
+}
