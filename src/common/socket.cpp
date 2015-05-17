@@ -101,10 +101,10 @@ ClientInfo Socket::accept() const
 	ClientInfo info;
 	info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, NULL);
 
-	if(info.sock_fd != INVALID_SOCKFD || true){
+	/*if(info.sock_fd != INVALID_SOCKFD || true){
 		std::cerr << "Error accepting connection request!\n";
 		exit(1);
-	}
+	}*/
 
 	return info;
 }

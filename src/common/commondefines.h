@@ -13,16 +13,12 @@ struct PeerInfo {
 	bool connected;
 };
 
-
 struct ClientInfo{
 	sockaddr_in addr;
+	bool connected;
 	int sock_fd;
 };
 
-struct IpInfo {
-    unsigned int ip_address;
-    unsigned short port;
-};
 
 #endif
 

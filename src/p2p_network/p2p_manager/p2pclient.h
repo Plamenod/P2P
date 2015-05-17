@@ -6,19 +6,28 @@
 #include <string>
 #include <vector>
 
-#define PORT 23456
+#define CLIENT_PORT 23456
+#define SERVER_PORT 23457
+#define FILE_MANAGER_PORT 23458
 
 class P2PClient
 {
 public:
-    P2PClient(){}
-    ~P2PClient();
+    P2PClient(
+        uint16_t client_port = CLIENT_PORT,
+        uint16_t server_port = SERVER_PORT,
+        uint16_t file_mgr_port = FILE_MANAGER_PORT):
+        client_port(client_port),
+        server_port(server_port) ,
+        file_mgr_port(file_mgr_port) {}
+
+
     P2PClient(const P2PClient&) = delete;
     P2PClient& operator=(const P2PClient&) = delete;
 
     void setServerIP(const std::string& ip);
 
-    void connectToServer(const std::string& ip, unsigned short port = PORT);
+    void connectToServer(const std::string& ip, uint16_t port = CLIENT_PORT);
     void getPeersInfo(std::vector<PeerInfo>& result) const;
 
 private:
@@ -27,6 +36,9 @@ private:
     void receivePeersInfo(std::vector<PeerInfo>& result) const;
 
     Socket socket;
+    uint16_t client_port;
+    uint16_t server_port;
+    uint16_t file_mgr_port;
     std::string server_ip;
 };
 

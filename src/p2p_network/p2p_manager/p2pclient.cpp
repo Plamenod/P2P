@@ -10,19 +10,14 @@
 #include <sstream>
 
 const int retries = 10;
-const unsigned int BUFFERSIZE_W = 16384; /// default send size
-
-P2PClient::~P2PClient()
-{
-
-}
+const uint32_t BUFFERSIZE_W = 16384; /// default send size
 
 void P2PClient::setServerIP(const std::string& ip)
 {
-    server_ip = ip;
+    //server_ip = ip;
 }
 
-void P2PClient::connectToServer(const std::string& ip, unsigned short port)
+void P2PClient::connectToServer(const std::string& ip, uint16_t port)
 {
     setServerIP(ip);
     socket.connectTo(ip, port);
@@ -61,7 +56,7 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     size_t received;
-    char buffer[BUFFERSIZE_W], *buff_ptr;
+    char buffer[BUFFERSIZE_W], *buff_ptr = buffer;
     received = recv(buffer, BUFFERSIZE_W);
     if(received <= 0) {
         std::cerr << "No connection to main server(receiving peers info)" << std::endl;
@@ -69,9 +64,9 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
     }
     int number_of_peers = (int)(*buff_ptr);
 
-    unsigned char ip_addr_part;
-    unsigned int ip_addr;
-    unsigned short port;
+    uint8_t ip_addr_part;
+    uint32_t ip_addr;
+    uint16_t port;
 
     int ip_addr_size = sizeof(ip_addr);
     int numb_of_peers_size = sizeof(number_of_peers);
@@ -81,15 +76,15 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
     for(int i = 0; i < number_of_peers; ++i) {
         std::stringstream strstream;
         int offset = numb_of_peers_size + i;
-        ip_addr = (unsigned int)(*(buff_ptr + offset));
+        ip_addr = (uint32_t)(*(buff_ptr + offset));
         for(int i = 0; i < 4; ++i) {
-            unsigned char* ip_addr_ptr = (unsigned char*)&ip_addr;
-            ip_addr_part = (unsigned char)(*(ip_addr_ptr + i));
+            uint8_t* ip_addr_ptr = (uint8_t*)&ip_addr;
+            ip_addr_part = (uint8_t)(*(ip_addr_ptr + i));
             strstream << ip_addr_part;
             if(i < 3) strstream << ".";
         }
         offset += ip_addr_size;
-        port = (unsigned short)(*(buff_ptr + offset));
+        port = (uint16_t)(*(buff_ptr + offset));
         strstream << "/" << port;
 
         peer_info_tmp.address = strstream.str();

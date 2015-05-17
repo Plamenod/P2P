@@ -24,12 +24,12 @@ public:
     void start();
 
 private:
-	//std::vector< pair<int, short> > getConnectedPeers();
+	void handleClientConnect(const ClientInfo& client);
+	void serveConnectedClients(char* in_buffer);
 
 	Socket socket;
 	short port;
 	std::vector<ClientInfo> clients;
-
 };
 
 #endif // P2P_MAIN_SERVER_H_
