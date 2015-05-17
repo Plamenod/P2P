@@ -53,7 +53,10 @@ uint64_t FileClient::send(
 //    std::unique_ptr<char[]> buffer(new char[data_length]);
     std::unique_ptr<char> buffer(new char);
 
-    while(fread(buffer.get(), sizeof(char), 1, file_to_send)) {
+    while(data_length) {
+        fread(buffer.get(), sizeof(char), 1, file_to_send);
+        --data_length;
+
         if(ferror(file_to_send)) {
             std::cerr << "Failed to read file" << std::endl;
             fclose(file_to_send);
@@ -76,6 +79,7 @@ uint64_t FileClient::send(
     }
 
     uint64_t fileID = getFileID(host_socket);
+    std::cout << "FileID: " << fileID << std::endl;
 
     fclose(file_to_send);
     return fileID;
@@ -92,12 +96,8 @@ bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
 }
 
 uint64_t FileClient::getFileID(const Socket& host_socket) {
-    ClientInfo server_info;
-    host_socket.listen();
-    server_info = host_socket.accept();
-
     uint64_t file_id;
-    int file_read = read(server_info.sock_fd, &file_id, sizeof(uint64_t));
+    int file_read = read(host_socket.getFd(), &file_id, sizeof(uint64_t));
 
     if(file_read == -1) {
         std::cerr << "Failed to read from socket" << std::endl;
