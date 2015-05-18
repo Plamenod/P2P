@@ -5,9 +5,15 @@
 #include "commondefines.h"
 
 #include <string>
-#include <sys/types.h>
-#include <sys/socket.h>
 
+#ifdef C_WIN_SOCK
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#else
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/fcntl.h>
+#endif
 
 #define PROTOCOL 0
 #define BACKLOG 10

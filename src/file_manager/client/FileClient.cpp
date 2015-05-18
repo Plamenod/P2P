@@ -1,7 +1,7 @@
 #include "FileClient.h"
 #include <iostream>
 #include <cstring>
-#include <unistd.h>
+#include <stdint.h>
 #include <memory>
 #include <sstream>
 

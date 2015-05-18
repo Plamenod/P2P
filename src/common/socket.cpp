@@ -3,14 +3,29 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/fcntl.h>
 //#include <netinet/in.h>
+
+#ifdef C_WIN_SOCK
+	#include <winsock2.h>
+	#include <WS2tcpip.h>
+#else
+	#define SOCKET_ERROR -1
+	#include <unistd.h>
+	#include <arpa/inet.h>
+	#include <sys/fcntl.h>
+#endif
+
+
 
 
 Socket::Socket(int fdesc) : fd(fdesc)
 {
+#ifdef C_WIN_SOCK
+	// init MS lib
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+
 	this->fd = socket(AF_INET, SOCK_STREAM, PROTOCOL);
 
 	if(this->fd < 0){
@@ -22,7 +37,11 @@ Socket::Socket(int fdesc) : fd(fdesc)
 
 Socket::~Socket()
 {
+#ifdef C_WIN_SOCK
+	closesocket(this->fd);
+#else
 	close(this->fd);
+#endif
 }
 
 
@@ -41,8 +60,13 @@ void Socket::bindTo(unsigned short port) const
 
 
 	int yes = 1;
-	if (setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+	if (setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&yes), sizeof(int)) == -1) {
+
+#ifdef C_WIN_SOCK
+		closesocket(this->fd);
+#else
 		close(this->fd);
+#endif
 		std::cerr << "Failed to setsockop SO_REUSEADDR\n";
 		exit(1);
 	}
@@ -77,13 +101,19 @@ void Socket::connectTo(const std::string& ip, unsigned short port) const
 void Socket::addOption(int option)
 {
 	int opt_val;
-	setsockopt(this->fd, SOL_SOCKET, option, &opt_val, sizeof(int));
+	setsockopt(this->fd, SOL_SOCKET, option, reinterpret_cast<const char*>(&opt_val), sizeof(int));
 }
 
 
 void Socket::makeNonblocking() const
 {
-	if(fcntl(this->fd, F_SETFL, O_NONBLOCK) == EWOULDBLOCK){
+
+#ifdef C_WIN_SOCK
+	u_long mode = 1;
+	if (ioctlsocket(this->fd, FIONBIO, &mode) != NO_ERROR) {
+#else
+	if(fcntl(this->fd, F_SETFL, O_NONBLOCK) == -1) {
+#endif
 		std::cerr << "Cannot make socket nonblocking!\n";
 		exit(1);
 	}
