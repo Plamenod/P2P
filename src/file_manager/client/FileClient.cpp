@@ -5,6 +5,8 @@
 #include <memory>
 #include <sstream>
 
+#define MAX_SIZE 100
+
 FileClient::FileClient() {
 
 }
@@ -50,15 +52,15 @@ uint64_t FileClient::send(
     }
 
 
-//    std::unique_ptr<char[]> buffer(new char[data_length]);
-    std::unique_ptr<char> buffer(new char);
+    std::unique_ptr<char[]> buffer(new char[MAX_SIZE + 1]);
+//    std::unique_ptr<char> buffer(new char);
 
     while(data_length) {
-        fread(buffer.get(), sizeof(char), 1, file_to_send);
-        --data_length;
+        fread(buffer.get(), sizeof(char), MAX_SIZE, file_to_send);
+        data_length -= MAX_SIZE;
 
         if(ferror(file_to_send)) {
-            std::cerr << "Failed to read file" << std::endl;
+            std::cerr << "Failed to read file content" << std::endl;
             fclose(file_to_send);
             return 0;
         }
@@ -79,7 +81,7 @@ uint64_t FileClient::send(
     }
 
     uint64_t fileID = getFileID(host_socket);
-    std::cout << "FileID: " << fileID << std::endl;
+//    std::cout << "FileID: " << fileID << std::endl;
 
     fclose(file_to_send);
     return fileID;

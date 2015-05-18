@@ -10,7 +10,7 @@ public:
 	FileClient();
 	virtual ~FileClient();
 
-	std::vector<uint64_t> getIds() override { 
+	std::vector<uint64_t> getIds() override {
 		assert(false);
 		return std::vector<uint64_t>();
 	};
@@ -39,7 +39,7 @@ private:
     uint64_t getFileID(const Socket& host_socket);
 
     /**
-    * @return host and port
+    * @return host and port as pair
     */
     std::pair<std::string, unsigned short> getHostAndPort(const std::string& host);
 
