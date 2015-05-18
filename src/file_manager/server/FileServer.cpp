@@ -1,10 +1,3 @@
-/*
- * FileServer.cpp
- *
- *  Created on: May 16, 2015
- *      Author: plamen
- */
-
 #include "FileServer.h"
 #include "socket.h"
 
@@ -53,27 +46,14 @@ bool FileServer::receive(unsigned short host_port) {
     }
 
     initial_append(newsockfd);
+    append_to_file(newsockfd);
 
-
-    int readed_bytes = -1;
-    memset(buffer.get(), 0, SIZE_BUFFER); // TODO remove to append_to_file, after appended it
-    while(info.size_of_file) {
-        readed_bytes = ::recv(newsockfd, buffer.get(), SIZE_BUFFER - 1, 0);
-        printf("Here is the message: %s\n", buffer.get());
-
-        printf("bytes %d\n", readed_bytes);
-        info.size_of_file -= readed_bytes;
-    }
-    ::send(newsockfd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
-
-    if (readed_bytes < 0) {
-        std::cerr << "ERROR writing to socket";
-    }
     return true/*TODO*/;
 }
 
 /*you have to have the id before use it*/
 bool FileServer::initial_append(int newsockfd) {
+
     // get size of the file from the client
     ::recv(newsockfd, reinterpret_cast<char *>(&info.size_of_file), sizeof(uint64_t), 0);
     printf("size_of_file: %ld\n", info.size_of_file);
@@ -81,6 +61,27 @@ bool FileServer::initial_append(int newsockfd) {
     return fwrite(&info, sizeof(InfoData), 1, fd);
 }
 
-bool FileServer::append_to_file() {
+bool FileServer::append_to_file(int newsockfd) {
+
+
+    int readed_bytes = -1;
+
+    while(info.size_of_file) {
+
+        readed_bytes = ::recv(newsockfd, buffer.get(), SIZE_BUFFER - 1, 0);
+        printf("Here is the message: %s\n", buffer.get());
+        printf("bytes %d\n", readed_bytes);
+
+        fwrite(buffer.get(), sizeof(char), readed_bytes, fd);
+
+        info.size_of_file -= readed_bytes;
+        memset(buffer.get(), 0, SIZE_BUFFER);
+
+    }
+   // ::send(newsockfd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);  test id
+
+    if (readed_bytes < 0) {
+        std::cerr << "ERROR writing to socket";
+    }
     return false;
 }

@@ -1,10 +1,3 @@
-/*
- * FileServer.h
- *
- *  Created on: May 16, 2015
- *      Author: plamen
- */
-
 #ifndef SRC_FILE_MANAGER_SERVER_FILESERVER_H_
 #define SRC_FILE_MANAGER_SERVER_FILESERVER_H_
 
@@ -28,10 +21,12 @@ public:
 	~FileServer();
 
     virtual bool receive( unsigned short host_port);
+
     /*append only size of file and unique id*/
     virtual bool initial_append(int);
+
     /*append current buffer*/
-    virtual bool append_to_file();
+    virtual bool append_to_file(int);
 
 private:
     std::unique_ptr<char[]> buffer;
