@@ -17,7 +17,6 @@ FileClient::~FileClient() {
 
 uint64_t FileClient::send(
     const std::string & host,
-    const unsigned short host_port,
     std::string & file_path,
     uint64_t from,
     uint64_t to)
@@ -29,8 +28,11 @@ uint64_t FileClient::send(
         return 0;
     }
 
+    std::string ip = getHost(host);
+    unsigned short host_port = getPort(host);
+
     Socket host_socket;
-    host_socket.connectTo(host, host_port);
+    host_socket.connectTo(ip, host_port);
 
     if(!sendLength(host_socket, data_length)) {
         std::cerr << "Failed to send file of length - " << data_length << std::endl;
@@ -109,15 +111,12 @@ uint64_t FileClient::getFileID(const Socket& host_socket) {
     return file_id;
 }
 
-std::pair<std::string, unsigned short> FileClient::getHostAndPort(const std::string& host) {
-    std::vector<std::string> hostAndPort = split(host, ":");
+std::string FileClient::getHost(const std::string& host) {
+    return split(host, ":")[0];
+}
 
-    std::pair<std::string, unsigned short> host_port;
-
-    host_port.first = hostAndPort[0];
-    host_port.second = strtoul(hostAndPort[1].c_str(), nullptr, 10);
-
-    return host_port;
+unsigned short FileClient::getPort(const std::string& host) {
+    return (unsigned short)strtoul(split(host, ":")[1].c_str(), nullptr, 10);
 }
 
 std::vector<std::string> FileClient::split(std::string str, const char* delimiter) {

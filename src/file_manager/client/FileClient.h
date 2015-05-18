@@ -17,7 +17,6 @@ public:
 
     uint64_t send(
         const std::string & host,
-        const unsigned short host_port,
         std::string & file_path,
         uint64_t from = 0,
         uint64_t to = -1) override;
@@ -38,11 +37,10 @@ private:
     */
     uint64_t getFileID(const Socket& host_socket);
 
-    /**
-    * @return host and port as pair
-    */
-    std::pair<std::string, unsigned short> getHostAndPort(const std::string& host);
 
+    std::string getHost(const std::string& host);
+
+    unsigned short getPort(const std::string& host);
 
     std::vector<std::string> split(std::string str, const char* delimiter);
 };
