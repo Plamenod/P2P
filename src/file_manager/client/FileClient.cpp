@@ -1,4 +1,5 @@
 #include "FileClient.h"
+#include "util.h"
 #include <iostream>
 #include <cstring>
 #include <stdint.h>
@@ -111,23 +112,4 @@ uint64_t FileClient::getFileID(const Socket& host_socket) {
     return file_id;
 }
 
-std::string FileClient::getHost(const std::string& host) {
-    return split(host, ":")[0];
-}
-
-unsigned short FileClient::getPort(const std::string& host) {
-    return (unsigned short)strtoul(split(host, ":")[1].c_str(), nullptr, 10);
-}
-
-std::vector<std::string> FileClient::split(std::string str, const char* delimiter) {
-    std::vector<std::string> internal;
-    std::stringstream ss(str);
-    std::string tok;
-
-    while(getline(ss, tok, delimiter[0])) {
-        internal.push_back(tok);
-    }
-
-    return internal;
-}
 
