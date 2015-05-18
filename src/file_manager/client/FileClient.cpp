@@ -65,7 +65,7 @@ uint64_t FileClient::send(
 
 //        std::cout << buffer.get();
 
-        int bytes_sent = write(host_socket.getFd(), buffer.get(), strlen(buffer.get()));
+        int bytes_sent = ::send(host_socket.getFd(), buffer.get(), strlen(buffer.get()), 0);
 
         if(bytes_sent == -1) {
             std::cerr << "Failed to write to socket" << std::endl;
@@ -87,7 +87,7 @@ uint64_t FileClient::send(
 
 bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
 
-    int byte_sent = write(host_socket.getFd(), &length, sizeof(uint64_t));
+    int byte_sent = ::send(host_socket.getFd(), reinterpret_cast<const char *>(&length), sizeof(uint64_t), 0);
 
     if(byte_sent == -1) {
         return false;
@@ -97,7 +97,7 @@ bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
 
 uint64_t FileClient::getFileID(const Socket& host_socket) {
     uint64_t file_id;
-    int file_read = read(host_socket.getFd(), &file_id, sizeof(uint64_t));
+    int file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
 
     if(file_read == -1) {
         std::cerr << "Failed to read from socket" << std::endl;

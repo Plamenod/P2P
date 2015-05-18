@@ -3,13 +3,17 @@
 #include "file_manager_interface.h"
 #include "socket.h"
 #include <utility>
+#include <cassert>
 
 class FileClient : public FileManagerInterface{
 public:
 	FileClient();
 	virtual ~FileClient();
 
-    std::vector<uint64_t> getIds() override {};
+	std::vector<uint64_t> getIds() override { 
+		assert(false);
+		return std::vector<uint64_t>();
+	};
 
     uint64_t send(
         const std::string & host,

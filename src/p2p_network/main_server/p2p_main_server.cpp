@@ -39,7 +39,7 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
 {
     size_t clients_count = this->clients.size();
     for(size_t i = 0; i < clients_count; ++i){
-        ssize_t received_len = recv(clients[i].sock_fd, in_buffer, BUFFER_SIZE, 0);
+        size_t received_len = recv(clients[i].sock_fd, in_buffer, BUFFER_SIZE, 0);
         if(received_len == 1){
             switch(in_buffer[0]){
                 case '1': break;

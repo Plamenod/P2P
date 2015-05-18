@@ -16,3 +16,7 @@ include_directories(common)
 
 add_executable(P2P ${HEADERS} ${SOURCES} ${COMMON_HEADERS} ${COMMON_SOURCES})
 target_link_libraries(P2P FileManager P2PManager)
+
+if(WIN32)
+	target_link_libraries(P2P wsock32 ws2_32)
+endif()
