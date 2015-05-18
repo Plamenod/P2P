@@ -5,8 +5,8 @@ add_subdirectory(p2p_network)
 
 project(P2P)
 
-file(GLOB HEADERS "*.h")
-file(GLOB SOURCES "*.cpp")
+file(GLOB HEADERS "*.h" "app/*.h")
+file(GLOB SOURCES "*.cpp" "app/*.cpp")
 
 file(GLOB COMMON_HEADERS "common/*.h")
 
