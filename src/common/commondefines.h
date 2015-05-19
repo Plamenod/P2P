@@ -26,11 +26,18 @@ struct PeerInfo {
 	bool connected;
 };
 
-struct ClientInfo{
+struct ServerInfo {
+    uint32_t ip_addr;
+    uint16_t server_port;
+    uint16_t file_mgr_port;
+};
+
+struct ClientInfo {
 	sockaddr_in addr;
 	bool connected;
 	int sock_fd;
 	uint16_t server_port;
+	uint16_t file_mgr_port;
 };
 
 

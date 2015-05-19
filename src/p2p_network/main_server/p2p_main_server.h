@@ -7,9 +7,7 @@
 #include <utility>
 #include <vector>
 
-#define MSPORT 3695
 #define INITIAL_CLIENTS_COUNT 64
-#define BUFFER_SIZE 16384
 
 class P2PMainServer{
 
@@ -24,11 +22,14 @@ public:
     void start();
 
 private:
+    size_t recv(void* buf, size_t buf_size, int flags = 0) const;
+    size_t send(int client_fd, const void* buf, size_t msg_size, int flags = 0) const;
 	void handleClientConnect(ClientInfo& client);
 	void serveConnectedClients(char* in_buffer);
+	void acceptClientListeningPort(char* in_buffer, int client_index);
 
 	Socket socket;
-	short port;
+	uint16_t port;
 	std::vector<ClientInfo> clients;
 };
 

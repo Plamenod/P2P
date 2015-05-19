@@ -29,7 +29,7 @@ void P2PClient::connectToServer(const std::string& ip)
 {
     setServerIP(ip);
     socket.connectTo(ip, client_port);
-    sendListeningPort();
+    sendPortsToMainServer();
 }
 
 size_t P2PClient::send(const void* buf, size_t size, int flags) const
@@ -42,17 +42,28 @@ size_t P2PClient::recv(void* buf, size_t size, int flags) const
 	return ::recv(socket.getFd(), reinterpret_cast<char *>(buf), size, flags);
 }
 
-void P2PClient::sendListeningPort() const
+void P2PClient::sendPortsToMainServer() const
 {
     char cmd = Command::LISTENING_PORT;
     char out_buff[OUT_BUFFERSIZE], *buff_ptr = out_buff;
     out_buff[0] = cmd;
-    memcpy(out_buff + 1, &server_port, sizeof(server_port));
-    size_t sent = send(out_buff, sizeof(cmd) + sizeof(server_port));
+
+    int cmd_size = sizeof(cmd);
+    int server_port_size = sizeof(server_port);
+    int file_mgr_port_size = sizeof(file_mgr_port);
+
+    memcpy(out_buff + cmd_size, &server_port, server_port_size);
+    int offset = cmd_size + server_port_size;
+    memcpy(out_buff + offset, &file_mgr_port, file_mgr_port_size);
+
+    int data_size = cmd_size + server_port_size + file_mgr_port_size;
+    size_t sent = send(out_buff, data_size);
     if(sent <= 0) {
         std::cerr << "Sending listening port failed" << std::endl;
-    }
         exit(1);
+    }
+
+    std::cout << "Listening and file manager ports sent !!" << std::endl;
 }
 
 void P2PClient::getPeersInfo(std::vector<PeerInfo>& result) const
@@ -88,7 +99,8 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
 
     uint8_t ip_addr_part;
     uint32_t ip_addr;
-    uint16_t port;
+    uint16_t server_port;
+    uint16_t file_mgr_port;
 
     int ip_addr_size = sizeof(ip_addr);
     int numb_of_peers_size = sizeof(number_of_peers);
@@ -98,16 +110,19 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
     for(int i = 0; i < number_of_peers; ++i) {
         std::stringstream strstream;
         int offset = numb_of_peers_size + i;
-        ip_addr = (uint32_t)(*(buff_ptr + offset));
-        for(int i = 0; i < 4; ++i) {
+        ip_addr = *((uint32_t*)(buff_ptr + offset));
+
+        for(int j = 0; j < 4; ++j) {
             uint8_t* ip_addr_ptr = (uint8_t*)&ip_addr;
-            ip_addr_part = (uint8_t)(*(ip_addr_ptr + i));
+            ip_addr_part = *((uint8_t*)(ip_addr_ptr + j));
             strstream << ip_addr_part;
             if(i < 3) strstream << ".";
         }
         offset += ip_addr_size;
-        port = (uint16_t)(*(buff_ptr + offset));
-        strstream << "/" << port;
+        server_port = *((uint16_t*)(buff_ptr + offset));
+        offset += sizeof(server_port);
+        file_mgr_port = *((uint16_t*)(buff_ptr + offset));
+        strstream << "/" << server_port << "/" << file_mgr_port;
 
         peer_info_tmp.address = strstream.str();
         peer_info_tmp.connected = true;

@@ -34,7 +34,7 @@ private:
     size_t send(const void* buf, size_t size, int flags = 0) const;
     size_t recv(void* buf, size_t size, int flags = 0) const;
     void receivePeersInfo(std::vector<PeerInfo>& result) const;
-    void sendListeningPort()const;
+    void sendPortsToMainServer()const;
 
     Socket socket;
     uint16_t client_port;
