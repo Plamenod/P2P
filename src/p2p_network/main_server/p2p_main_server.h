@@ -22,11 +22,13 @@ public:
     void start();
 
 private:
-    size_t recv(void* buf, size_t buf_size, int flags = 0) const;
-    size_t send(int client_fd, const void* buf, size_t msg_size, int flags = 0) const;
+    size_t recv(int fd, void* buf, size_t buf_size, int flags = 0) const;
+    size_t send(int d, const void* buf, size_t msg_size, int flags = 0) const;
 	void handleClientConnect(ClientInfo& client);
 	void serveConnectedClients(char* in_buffer);
 	void acceptClientListeningPort(char* in_buffer, int client_index);
+	void sendPeersInfo(int out_peer_index) const;
+	void checkPeers(std::vector<ServerInfo>& connected_peers, int out_peer_index) const;
 
 	Socket socket;
 	uint16_t port;

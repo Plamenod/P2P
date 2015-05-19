@@ -23,7 +23,7 @@ private:
     void run()const;
 
 	Socket socket;
-	unsigned short port;
+	uint16_t port;
 };
 
 #endif // P2P_SERVER_H_

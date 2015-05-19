@@ -35,7 +35,8 @@ public:
 	int getFd() const { return fd; };
 
 	void bindTo(unsigned short port) const;
-	void connectTo(const std::string& ip, unsigned short port) const;
+	void connectTo(const std::string& ip, uint16_t port) const;
+	void connectTo(const sockaddr_in* server_addr) const;
 
 	void addOption(int option = SO_REUSEADDR);
 	void makeNonblocking() const;

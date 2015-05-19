@@ -79,7 +79,7 @@ void Socket::bindTo(unsigned short port) const
 }
 
 
-void Socket::connectTo(const std::string& ip, unsigned short port) const
+void Socket::connectTo(const std::string& ip, uint16_t port) const
 {
 	sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
@@ -97,6 +97,13 @@ void Socket::connectTo(const std::string& ip, unsigned short port) const
 	}
 }
 
+void Socket::connectTo(const sockaddr_in* server_addr) const
+{
+	if(connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr))) {
+		std::cerr << "Cannot connect to server !" << std::endl;
+		exit(1);
+	}
+}
 
 void Socket::addOption(int option)
 {
