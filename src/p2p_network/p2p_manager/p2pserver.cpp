@@ -15,6 +15,10 @@ void P2PServer::run() const
         ClientInfo client = socket.accept();
         char* ip_addr = inet_ntoa(client.addr.sin_addr);
         std::cout << "Accepted a client with ip " << ip_addr << std::endl;
+#ifdef C_WIN_SOCK
+        closesocket(client.sock_fd);
+#else
         close(client.sock_fd);
+#endif
     }
 }

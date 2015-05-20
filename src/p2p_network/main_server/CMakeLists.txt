@@ -13,6 +13,7 @@ include_directories(../../common/)
 list(APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 add_executable(P2PMainServer ${HEADERS} ${SOURCES} ${COMMON_SOURCES} ${COMMON_HEADERS})
+target_link_libraries(P2PMainServer Common)
 
 if(WIN32)
 	target_link_libraries(P2PMainServer wsock32 ws2_32)

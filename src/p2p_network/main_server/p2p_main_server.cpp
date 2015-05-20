@@ -4,7 +4,10 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+
+#ifndef C_WIN_SOCK
 #include <arpa/inet.h>
+#endif
 
 #define MSPORT 3695
 #define BUFFER_SIZE 16384
@@ -35,12 +38,12 @@ void P2PMainServer::start()
 
 size_t P2PMainServer::recv(int fd, void* buf, size_t buf_size, int flags) const
 {
-    return ::recv(fd, buf, buf_size, flags);
+    return ::recv(fd, reinterpret_cast<char *>(buf), buf_size, flags);
 }
 
 size_t P2PMainServer::send(int fd, const void* buf, size_t msg_size, int flags) const
 {
-    return ::send(fd, buf, msg_size, flags);
+    return ::send(fd, reinterpret_cast<const char *>(buf), msg_size, flags);
 }
 
 void P2PMainServer::handleClientConnect(ClientInfo& client)
@@ -82,8 +85,8 @@ void P2PMainServer::sendPeersInfo(int out_peer_index) const
     char buffer[BUFFER_SIZE];
     memcpy(buffer, &count, sizeof(count));
     int offset = sizeof(count);
-    int port_size = sizeof(ServerInfo::server_port);
-    int addr_size = sizeof(ServerInfo::ip_addr);
+    int port_size = sizeof(decltype(ServerInfo::server_port));
+    int addr_size = sizeof(decltype(ServerInfo::ip_addr));
     for(int i = 0; i < connected_peers.size(); ++i) {
         memcpy(buffer + offset, &connected_peers[i].ip_addr, addr_size);
         offset += addr_size;
