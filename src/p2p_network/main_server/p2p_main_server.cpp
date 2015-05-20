@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #endif
 
-#define MSPORT 3695
+#define MSPORT 23456
 #define BUFFER_SIZE 16384
 
 void P2PMainServer::start()
@@ -80,13 +80,17 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
 void P2PMainServer::sendPeersInfo(int out_peer_index) const
 {
     std::vector<ServerInfo> connected_peers;
+
     checkPeers(connected_peers, out_peer_index);
+
     int count = connected_peers.size();
     char buffer[BUFFER_SIZE];
     memcpy(buffer, &count, sizeof(count));
     int offset = sizeof(count);
+
     int port_size = sizeof(decltype(ServerInfo::server_port));
     int addr_size = sizeof(decltype(ServerInfo::ip_addr));
+
     for(int i = 0; i < connected_peers.size(); ++i) {
         memcpy(buffer + offset, &connected_peers[i].ip_addr, addr_size);
         offset += addr_size;

@@ -6,18 +6,11 @@
 #include <string>
 #include <vector>
 
-#define CLIENT_PORT 23456
-#define SERVER_PORT 23457
-#define FILE_MANAGER_PORT 23458
-
 class P2PClient
 {
 public:
-    P2PClient(
-        uint16_t client_port = CLIENT_PORT,
-        uint16_t server_port = SERVER_PORT,
-        uint16_t file_mgr_port = FILE_MANAGER_PORT):
-        client_port(client_port),
+    P2PClient(uint16_t main_server_port, uint16_t server_port, uint16_t file_mgr_port):
+        main_server_port(main_server_port),
         server_port(server_port) ,
         file_mgr_port(file_mgr_port) {}
 
@@ -37,7 +30,7 @@ private:
     void sendPortsToMainServer()const;
 
     Socket socket;
-    uint16_t client_port;
+    uint16_t main_server_port;
     uint16_t server_port;
     uint16_t file_mgr_port;
     std::string server_ip;

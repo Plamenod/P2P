@@ -28,7 +28,7 @@ void P2PClient::setServerIP(const std::string& ip)
 void P2PClient::connectToServer(const std::string& ip)
 {
     setServerIP(ip);
-    socket.connectTo(ip, client_port);
+    socket.connectTo(ip, main_server_port);
     sendPortsToMainServer();
 }
 

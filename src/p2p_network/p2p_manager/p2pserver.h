@@ -5,12 +5,10 @@
 #include "commondefines.h"
 #include <vector>
 
-#define PORT 23457
-
 class P2PServer{
 
 public:
-	P2PServer(unsigned short port = PORT): port(port) {};
+	P2PServer(unsigned short port): port(port) {};
 
 	P2PServer(const P2PServer& other) = delete;
 	P2PServer& operator =(const P2PServer& other) = delete;
@@ -20,7 +18,7 @@ public:
 	void start() const;
 
 private:
-    void run()const;
+    void run() const;
 
 	Socket socket;
 	uint16_t port;
