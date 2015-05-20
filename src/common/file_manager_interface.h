@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 class FileManagerInterface {
 public:
@@ -14,7 +15,10 @@ public:
 		uint64_t from = 0,
 		uint64_t to = -1) = 0;
 
-	virtual std::vector<uint64_t> getIds() = 0;
+	virtual std::vector<uint64_t> getMyIds() = 0;
+    virtual std::unique_ptr<char[]> getFile(const std::string & host, uint64_t id) = 0;
+
+    virtual void run() = 0;
 
 	virtual ~FileManagerInterface(){};
 };
