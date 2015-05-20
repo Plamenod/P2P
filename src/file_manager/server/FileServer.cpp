@@ -17,10 +17,10 @@
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
 using namespace std;
-FileServer::FileServer() : buffer(unique_ptr<char[]>( new char[SIZE_BUFFER])) {
+FileServer::FileServer() : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
 
     info.size_of_file = 0;
-    fd = fopen("tmp.dat", "ab+");
+    fd = fopen("data_file.dat", "ab+");
     if(fd == NULL)
     {
         std::cerr << "can't open the file" << std::endl;
@@ -64,23 +64,23 @@ bool FileServer::initial_append(int newsockfd) {
 bool FileServer::append_to_file(int newsockfd) {
 
 
-    int readed_bytes = -1;
+    int read_bytes = -1;
 
     while(info.size_of_file) {
 
-        readed_bytes = ::recv(newsockfd, buffer.get(), SIZE_BUFFER - 1, 0);
+        read_bytes = ::recv(newsockfd, buffer.get(), SIZE_BUFFER - 1, 0);
         printf("Here is the message: %s\n", buffer.get());
-        printf("bytes %d\n", readed_bytes);
+        printf("bytes %d\n", read_bytes);
 
-        fwrite(buffer.get(), sizeof(char), readed_bytes, fd);
+        int k = fwrite(buffer.get(), sizeof(char), read_bytes, fd);
 
-        info.size_of_file -= readed_bytes;
+        info.size_of_file -= read_bytes;
         memset(buffer.get(), 0, SIZE_BUFFER);
 
     }
-   // ::send(newsockfd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);  test id
+    ::send(newsockfd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
 
-    if (readed_bytes < 0) {
+    if (read_bytes < 0) {
         std::cerr << "ERROR writing to socket";
     }
     return false;
