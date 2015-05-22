@@ -1,4 +1,5 @@
 #include "p2p_main_server.h"
+#include "commondefines.h"
 
 #include <cstring>
 #include <iostream>
@@ -7,6 +8,7 @@
 
 #ifndef C_WIN_SOCK
 #include <arpa/inet.h>
+#include <errno.h>
 #endif
 
 #define MSPORT 23456
@@ -14,24 +16,28 @@
 
 void P2PMainServer::start()
 {
+    this->socket.makeNonblocking();
+
 	this->socket.bindTo(MSPORT);
 	if(!this->socket.listen()){
 		std::cerr << "Unsuccessful listening request!\n";
 		exit(1);
 	}
 
-	this->socket.makeNonblocking();
-
 	char buffer[BUFFER_SIZE];
 	memset(buffer, 0, sizeof(buffer));
 
-	std::cout << "Server waiting for connections !" << std::endl;
+	std::cout << "Server waiting for connections at port " << MSPORT << std::endl;
 	while(true) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		ClientInfo current_client = this->socket.accept();
+		if(errno == EAGAIN || errno == EWOULDBLOCK) {
+            continue;
+		}
 		handleClientConnect(current_client);
 		char* client_ip_addr = inet_ntoa(current_client.addr.sin_addr);
 		std::cout << "Accepted connection from " << client_ip_addr << std::endl;
+		std::cout << "File descriptor " << current_client.sock_fd << std::endl;
 		serveConnectedClients(buffer);
 	}
 }
@@ -52,6 +58,13 @@ void P2PMainServer::handleClientConnect(ClientInfo& client)
         client.connected = true;
         client.server_port = 0;
         client.file_mgr_port = 0;
+        /** make the socket non-blocking so recv does not block
+          * when called in serveConnectedClients
+          */
+        if(fcntl(client.sock_fd, F_SETFL, O_NONBLOCK) == -1) {
+            std::cerr << "Cannot make client socket non-blocking !\n";
+            exit(1);
+        }
         this->clients.push_back(client);
     }
 }
@@ -59,15 +72,15 @@ void P2PMainServer::handleClientConnect(ClientInfo& client)
 void P2PMainServer::serveConnectedClients(char* in_buffer)
 {
     size_t clients_count = this->clients.size();
-    char cmd;
+    Command cmd;
     for(size_t i = 0; i < clients_count; ++i) {
         size_t received_len = recv(clients[i].sock_fd, &cmd, sizeof(cmd));
-        if(received_len == 1){
-            switch(in_buffer[0]) {
-                case '1':
+        if(received_len == sizeof(Command)){
+            switch(cmd) {
+                case Command::GET_PEERS:
                     sendPeersInfo(i);
                     break;
-                case '2':
+                case Command::LISTENING_PORT:
                     acceptClientListeningPort(in_buffer, i);
                     break;
                 default:
@@ -105,6 +118,8 @@ void P2PMainServer::sendPeersInfo(int out_peer_index) const
         std::cerr << "Failed sending peers info !" << std::endl;
         exit(1);
     }
+    std::cout << "Peer's info sent " << std::endl;
+    std::cout << count << " peers connected" << std::endl;
 }
 
 void P2PMainServer::checkPeers(std::vector<ServerInfo>& connected_peers, int out_peer_index) const
@@ -128,8 +143,7 @@ void P2PMainServer::checkPeers(std::vector<ServerInfo>& connected_peers, int out
 
 void P2PMainServer::acceptClientListeningPort(char* in_buffer, int client_index)
 {
-    char cmd = Command::LISTENING_PORT;
-    int offset = sizeof(cmd);
+    int offset = 0;
     size_t received = recv(clients[client_index].sock_fd, in_buffer, BUFFER_SIZE);
     if(received <= 0) {
         std::cerr << "No server and file manager ports received !" << std::endl;
@@ -138,4 +152,7 @@ void P2PMainServer::acceptClientListeningPort(char* in_buffer, int client_index)
     clients[client_index].server_port = *((uint16_t*)(in_buffer + offset));
     offset += sizeof(clients[client_index].server_port);
     clients[client_index].file_mgr_port = *((uint16_t*)(in_buffer + offset));
+
+    std::cout << "Server port: " << clients[client_index].server_port << std::endl;
+    std::cout << "File manager port: " << clients[client_index].file_mgr_port << std::endl;
 }

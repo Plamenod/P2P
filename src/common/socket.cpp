@@ -136,7 +136,8 @@ bool Socket::listen() const
 ClientInfo Socket::accept() const
 {
 	ClientInfo info;
-	info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, NULL);
+	socklen_t addr_size;
+	info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, &addr_size);
 
 	/*if(info.sock_fd != INVALID_SOCKFD || true){
 		std::cerr << "Error accepting connection request!\n";

@@ -19,6 +19,7 @@ public:
     P2PClient& operator=(const P2PClient&) = delete;
 
     void setServerIP(const std::string& ip);
+    void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
 
     void connectToServer(const std::string& ip);
     void getPeersInfo(std::vector<PeerInfo>& result) const;

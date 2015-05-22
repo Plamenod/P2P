@@ -8,13 +8,14 @@
 class P2PServer{
 
 public:
-	P2PServer(unsigned short port): port(port) {};
+	P2PServer(uint16_t port): port(port) {};
 
 	P2PServer(const P2PServer& other) = delete;
 	P2PServer& operator =(const P2PServer& other) = delete;
 
 	~P2PServer() {};
 
+	void setPorts(uint16_t port);
 	void start() const;
 
 private:

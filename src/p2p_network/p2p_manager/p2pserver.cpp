@@ -3,6 +3,11 @@
 
 const unsigned int BUFFERSIZE = 1024;
 
+void P2PServer::setPorts(uint16_t port)
+{
+    this->port = port;
+}
+
 void P2PServer::start() const
 {
 	this->socket.bindTo(port);

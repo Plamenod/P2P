@@ -25,10 +25,18 @@ void P2PClient::setServerIP(const std::string& ip)
     server_ip = ip;
 }
 
+void P2PClient::setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port)
+{
+    this->main_server_port = ms_port;
+    this->server_port = server_port;
+    this->file_mgr_port = file_mgr_port;
+}
+
 void P2PClient::connectToServer(const std::string& ip)
 {
     setServerIP(ip);
     socket.connectTo(ip, main_server_port);
+    std::cout << "Connected to " << ip << " " << main_server_port << std::endl;
     sendPortsToMainServer();
 }
 
@@ -44,9 +52,10 @@ size_t P2PClient::recv(void* buf, size_t size, int flags) const
 
 void P2PClient::sendPortsToMainServer() const
 {
-    char cmd = Command::LISTENING_PORT;
+    Command cmd = Command::LISTENING_PORT;
     char out_buff[OUT_BUFFERSIZE], *buff_ptr = out_buff;
-    out_buff[0] = cmd;
+    //out_buff[0] = cmd;
+    memcpy(out_buff, &cmd, sizeof(cmd));
 
     int cmd_size = sizeof(cmd);
     int server_port_size = sizeof(server_port);
@@ -64,15 +73,19 @@ void P2PClient::sendPortsToMainServer() const
     }
 
     std::cout << "Listening and file manager ports sent !!" << std::endl;
+    std::cout << sent << " bytes" << std::endl;
+    std::cout << "Server port:" << server_port << "\nFile mgr port: " << file_mgr_port << std::endl;
 }
 
 void P2PClient::getPeersInfo(std::vector<PeerInfo>& result) const
 {
-    char cmd = Command::GET_PEERS;
+    Command cmd = Command::GET_PEERS;
     size_t sent;
     for(int i = 0; i < retries; ++i) {
         sent = send(&cmd, sizeof(cmd));
-        if(sent > 0) break;
+        if(sent > 0) {
+            break;
+        }
     }
 
     if(sent <= 0) {
