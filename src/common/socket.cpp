@@ -136,7 +136,7 @@ bool Socket::listen() const
 ClientInfo Socket::accept() const
 {
 	ClientInfo info;
-	socklen_t addr_size;
+	socklen_t addr_size = sizeof(ClientInfo);
 	info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, &addr_size);
 
 	/*if(info.sock_fd != INVALID_SOCKFD || true){
