@@ -29,6 +29,7 @@ void P2PMainServer::start()
 
 	std::cout << "Server waiting for connections at port " << MSPORT << std::endl;
 	while(true) {
+        serveConnectedClients(buffer);
 	    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		ClientInfo current_client = this->socket.accept();
 		if(current_client.sock_fd == -1) {
@@ -38,7 +39,6 @@ void P2PMainServer::start()
 		char* client_ip_addr = inet_ntoa(current_client.addr.sin_addr);
 		std::cout << "Accepted connection from " << client_ip_addr << std::endl;
 		std::cout << "File descriptor " << current_client.sock_fd << std::endl;
-		serveConnectedClients(buffer);
 	}
 }
 
@@ -138,7 +138,7 @@ void P2PMainServer::checkPeers(std::vector<ServerInfo>& connected_peers, int out
         Socket sock;
         sockaddr_in addr = clients[i].addr;
         addr.sin_port = htons(clients[i].server_port);
-        sock.connectTo(&addr);
+        //sock.connectTo(&addr);
         /** if connect does not exit it is succesfull */
         temp.ip_addr = addr.sin_addr.s_addr;
         temp.server_port = clients[i].server_port;
@@ -150,7 +150,7 @@ void P2PMainServer::checkPeers(std::vector<ServerInfo>& connected_peers, int out
 void P2PMainServer::acceptClientListeningPort(char* in_buffer, int client_index)
 {
     int offset = 0;
-    size_t received = recv(clients[client_index].sock_fd, in_buffer, BUFFER_SIZE);
+    size_t received = recv(clients[client_index].sock_fd, in_buffer, 4);
     if(received <= 0) {
         std::cerr << "No server and file manager ports received !" << std::endl;
         exit(1);
