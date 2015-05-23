@@ -3,10 +3,10 @@
 #include <iostream>
 #include <cstring>
 #include <stdint.h>
-#include <memory>
 #include <sstream>
 
 #define MAX_SIZE 100
+#define BYTE_TO_RECEIVE 100
 
 FileClient::FileClient() {
 
@@ -35,7 +35,7 @@ uint64_t FileClient::send(
     Socket host_socket;
     host_socket.connectTo(ip, host_port);
 
-    if(!sendLength(host_socket, data_length)) {
+    if(!sendNumber(host_socket, data_length)) {
         std::cerr << "Failed to send file of length - " << data_length << std::endl;
     }
 
@@ -90,9 +90,53 @@ uint64_t FileClient::send(
     return fileID;
 }
 
-bool FileClient::sendLength(const Socket& host_socket, uint64_t length) {
+std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id) {
+    std::string ip = getHost(host);
+    unsigned short port = getPort(host);
 
-    int byte_sent = ::send(host_socket.getFd(), reinterpret_cast<const char *>(&length), sizeof(uint64_t), 0);
+    Socket host_socket;
+    host_socket.connectTo(ip, port);
+
+    if(!sendNumber(host_socket, id)) {
+        std::cerr << "Failed to send file ID" << std::endl;
+        return nullptr;
+    }
+
+    uint64_t file_size;
+    if(::recv(host_socket.getFd(), reinterpret_cast<char*>(&file_size), sizeof(uint64_t), 0) == -1) {
+        std::cerr << "Failed to receive file size" << std::endl;
+        return nullptr;
+    }
+
+    std::cout << "File size: " << file_size << std::endl;
+
+    std::unique_ptr<char[]> file_content(new char[file_size+1]);
+
+    while(file_size) {
+        int byte_read = ::recv(
+                            host_socket.getFd(),
+                            reinterpret_cast<char*>(file_content.get()),
+                            file_size,
+                            0);
+
+        printf("byte read: %d \n Message: %s\n", byte_read, file_content.get());
+
+        memset(file_content.get(), 0, BYTE_TO_RECEIVE);
+        file_size -= byte_read;
+    }
+
+//    std::cout << file_content.get() << std::endl;
+
+    return std::move(file_content);
+}
+
+bool FileClient::sendNumber(const Socket& host_socket, uint64_t number) {
+
+    int byte_sent = ::send(
+                        host_socket.getFd(),
+                        reinterpret_cast<const char *>(&number),
+                        sizeof(uint64_t),
+                        0);
 
     if(byte_sent == -1) {
         return false;
