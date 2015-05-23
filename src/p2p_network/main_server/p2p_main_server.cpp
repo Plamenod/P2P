@@ -31,7 +31,7 @@ void P2PMainServer::start()
 	while(true) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		ClientInfo current_client = this->socket.accept();
-		if(errno == EAGAIN || errno == EWOULDBLOCK) {
+		if(current_client.sock_fd == -1) {
             continue;
 		}
 		handleClientConnect(current_client);
@@ -61,7 +61,13 @@ void P2PMainServer::handleClientConnect(ClientInfo& client)
         /** make the socket non-blocking so recv does not block
           * when called in serveConnectedClients
           */
-        if(fcntl(client.sock_fd, F_SETFL, O_NONBLOCK) == -1) {
+
+#ifdef C_WIN_SOCK
+        u_long mode = 1;
+        if (ioctlsocket(client.sock_fd, FIONBIO, &mode) != NO_ERROR) {
+#else
+        if (fcntl(this->fd, F_SETFL, O_NONBLOCK) == -1) {
+#endif
             std::cerr << "Cannot make client socket non-blocking !\n";
             exit(1);
         }

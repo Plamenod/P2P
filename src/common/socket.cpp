@@ -52,7 +52,7 @@ void Socket::bindTo(unsigned short port) const
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+	addr.sin_addr.s_addr = htonl(ADDR_ANY);
 	if(addr.sin_addr.s_addr == -1){
 		std::cerr << "Socket::bind_to : error converting address to int!\n";
 		exit(1);
@@ -136,7 +136,7 @@ bool Socket::listen() const
 ClientInfo Socket::accept() const
 {
 	ClientInfo info;
-	socklen_t addr_size = sizeof(ClientInfo);
+	socklen_t addr_size = sizeof(info.addr);
 	info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, &addr_size);
 
 	/*if(info.sock_fd != INVALID_SOCKFD || true){
