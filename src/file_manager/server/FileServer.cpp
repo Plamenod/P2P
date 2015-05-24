@@ -19,69 +19,119 @@
 using namespace std;
 FileServer::FileServer() : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
 
-    info.size_of_file = 0;
-    fd = fopen("data_file.dat", "ab+");
+    fd = fopen("/home/plamen/workspace/server_project/bin/Debug/data_file.dat", "rb+");
+
     if(fd == NULL)
     {
         std::cerr << "can't open the file" << std::endl;
         exit(1);
     }
+
     memset(buffer.get(), 0, SIZE_BUFFER);
-    info.id = 100; // fake id, it's only for testing
+    info.id = 66; // fake id, it's only for testing
+    info.size_of_file = 3048;
 }
 
 FileServer::~FileServer() {
     fclose(fd);
 }
 
-bool FileServer::receive(unsigned short host_port) {
+
+int FileServer::listen(int host_port) {
 
     socket.bindTo(host_port);
-    listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
-    int  newsockfd = accept(socket, nullptr, nullptr);
+    ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 
-    if (newsockfd < 0) {
-        std::cerr << "ERROR on accept\n";
+    return accept(socket, nullptr, nullptr);
+}
+
+
+bool FileServer::receive(unsigned short host_port) {
+
+    int  connection_fd = listen(host_port);
+
+    if (connection_fd < 0) {
+        cerr << "ERROR on accept\n";
         exit(1);  // TODO remove it
     }
 
-    initial_append(newsockfd);
-    append_to_file(newsockfd);
+    if(event_type(connection_fd) != 1) {
 
+        initial_append(connection_fd);
+        append_to_file(connection_fd);
+
+    } else {
+
+        send_file_to_client(connection_fd);
+    }
     return true/*TODO*/;
 }
 
-/*you have to have the id before use it*/
-bool FileServer::initial_append(int newsockfd) {
+bool FileServer::recieve_size_of_file(int connection_fd) {
 
-    // get size of the file from the client
-    ::recv(newsockfd, reinterpret_cast<char *>(&info.size_of_file), sizeof(uint64_t), 0);
-    printf("size_of_file: %ld\n", info.size_of_file);
+    return ::recv(connection_fd, reinterpret_cast<char *>(&info.size_of_file), sizeof(uint64_t), 0);
+}
+
+int FileServer::initial_append(int connection_fd) {
+
+    recieve_size_of_file(connection_fd);
 
     return fwrite(&info, sizeof(InfoData), 1, fd);
 }
 
-bool FileServer::append_to_file(int newsockfd) {
+int FileServer::append_to_file(int connection_fd) {
 
 
     int read_bytes = -1;
+    uint64_t size_of_file = info.size_of_file;
+    while(size_of_file) {
 
-    while(info.size_of_file) {
+        read_bytes = ::recv(connection_fd, buffer.get(), SIZE_BUFFER, 0);
 
-        read_bytes = ::recv(newsockfd, buffer.get(), SIZE_BUFFER - 1, 0);
-        printf("Here is the message: %s\n", buffer.get());
-        printf("bytes %d\n", read_bytes);
+        fwrite(buffer.get(), sizeof(char), read_bytes, fd);
 
-        int k = fwrite(buffer.get(), sizeof(char), read_bytes, fd);
-
-        info.size_of_file -= read_bytes;
-        memset(buffer.get(), 0, SIZE_BUFFER);
+        size_of_file -= read_bytes;
 
     }
-    ::send(newsockfd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
+    ::send(connection_fd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
 
     if (read_bytes < 0) {
         std::cerr << "ERROR writing to socket";
     }
     return false;
 }
+
+void FileServer::send_info_file_to_client(int newfd) {
+
+    ::send(
+        newfd,
+        reinterpret_cast<const char *>(&info.size_of_file),
+        sizeof(uint64_t),
+        0);
+}
+
+void FileServer::send_file_to_client(int newfd) {
+
+    send_info_file_to_client(newfd);
+
+    uint64_t bytes_to_transfer = info.size_of_file;
+    cout << bytes_to_transfer << endl;
+
+    printf(" will send %d bytes!!!\n", bytes_to_transfer);
+    fseek(fd, 0, SEEK_SET);
+    while(bytes_to_transfer > 0) {
+
+        int k = fread(buffer.get(), sizeof(char), 10, this->fd);
+        bytes_to_transfer -= k;
+        int s = ::send(newfd, buffer.get(), k, 0);
+
+        cout << k << ' ' << s << ' ' << bytes_to_transfer << endl;
+    }
+}
+
+uint64_t FileServer::event_type(int connection_fd) {
+    uint64_t type;
+    ::recv( connection_fd, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0);
+    return type;
+}
+

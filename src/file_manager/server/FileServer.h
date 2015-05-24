@@ -22,17 +22,23 @@ public:
 
     virtual bool receive( unsigned short host_port);
 
-    /*append only size of file and unique id*/
-    virtual bool initial_append(int);
-
-    /*append current buffer*/
-    virtual bool append_to_file(int);
-
 private:
+
+    void send_info_file_to_client(int);
+    void send_file_to_client(int);
+    /*append current buffer*/
+    int append_to_file(int);
+    /*append only size of file and unique id*/
+    int initial_append(int);
+    uint64_t event_type(int);
+
     std::unique_ptr<char[]> buffer;
     Socket socket;
     FILE* fd;
     InfoData info;
+
+    int listen(int);
+    bool recieve_size_of_file(int);
 
 //    std::vector<uint64_t> all_ids;
 };
