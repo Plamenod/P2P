@@ -19,7 +19,7 @@
 using namespace std;
 FileServer::FileServer() : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
 
-    fd = fopen("/home/plamen/workspace/server_project/bin/Debug/data_file.dat", "rb+");
+    fd = fopen("/home/plamen/workspace/server_project/bin/Debug/test.txt", "rb");
 
     if(fd == NULL)
     {
@@ -27,9 +27,10 @@ FileServer::FileServer() : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
         exit(1);
     }
 
+    isBind = false;
     memset(buffer.get(), 0, SIZE_BUFFER);
-    info.id = 66; // fake id, it's only for testing
-    info.size_of_file = 3048;
+    info.id = 99; // fake id, it's only for testing
+    //info.size_of_file = 3048;
 }
 
 FileServer::~FileServer() {
@@ -48,7 +49,11 @@ int FileServer::listen(int host_port) {
 
 bool FileServer::receive(unsigned short host_port) {
 
-    int  connection_fd = listen(host_port);
+    if(!isBind) {
+
+        connection_fd = listen(host_port);
+        isBind = true;
+    }
 
     if (connection_fd < 0) {
         cerr << "ERROR on accept\n";
@@ -69,7 +74,13 @@ bool FileServer::receive(unsigned short host_port) {
 
 bool FileServer::recieve_size_of_file(int connection_fd) {
 
-    return ::recv(connection_fd, reinterpret_cast<char *>(&info.size_of_file), sizeof(uint64_t), 0);
+    return ::recv(
+        connection_fd,
+        reinterpret_cast<char *>(&info.size_of_file),
+        sizeof(uint64_t),
+        0);
+
+    return true; // TODO also set ID
 }
 
 int FileServer::initial_append(int connection_fd) {
@@ -91,6 +102,7 @@ int FileServer::append_to_file(int connection_fd) {
         fwrite(buffer.get(), sizeof(char), read_bytes, fd);
 
         size_of_file -= read_bytes;
+        cout << size_of_file << endl;
 
     }
     ::send(connection_fd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
@@ -110,20 +122,42 @@ void FileServer::send_info_file_to_client(int newfd) {
         0);
 }
 
+uint64_t FileServer::get_id_by_client(int connection_fd) {
+    uint64_t id;
+    ::recv(connection_fd, &id, sizeof(uint64_t), 0);
+    return id;
+}
+
 void FileServer::send_file_to_client(int newfd) {
 
-    send_info_file_to_client(newfd);
+    uint64_t id = get_id_by_client(newfd);
 
-    uint64_t bytes_to_transfer = info.size_of_file;
-    cout << bytes_to_transfer << endl;
+    // while(fread(&info, sizeof(InfoData), 1, fd)) {
 
+    //     if(info.id != id) {
+    //         fseek(fd, info.size_of_file, SEEK_CUR);
+    //     }
+    //     // TODO check if the id was not found
+    // }
+
+    uint64_t bytes_to_transfer = 110;//info.size_of_file;
+    ::send(newfd, reinterpret_cast<const char*> (&bytes_to_transfer), sizeof(uint64_t), 0);
     printf(" will send %d bytes!!!\n", bytes_to_transfer);
-    fseek(fd, 0, SEEK_SET);
+
     while(bytes_to_transfer > 0) {
 
-        int k = fread(buffer.get(), sizeof(char), 10, this->fd);
+        int k = fread(buffer.get(), sizeof(char), 55, this->fd);
+        if ( ferror(fd) ) {
+                cout << "ERROR";
+            }
+            else if ( feof(fd) ) {
+                cout << "EOF" << endl;
+            }
         bytes_to_transfer -= k;
         int s = ::send(newfd, buffer.get(), k, 0);
+        if(k != s) {
+            cout << "Wrong k and s \n";
+        }
 
         cout << k << ' ' << s << ' ' << bytes_to_transfer << endl;
     }

@@ -39,6 +39,11 @@ private:
 
     int listen(int);
     bool recieve_size_of_file(int);
+    uint64_t get_id_by_client(int);
+
+    bool isBind;
+    
+    int  connection_fd;
 
 //    std::vector<uint64_t> all_ids;
 };
