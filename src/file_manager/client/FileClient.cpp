@@ -8,7 +8,7 @@
 #define MAX_SIZE 100
 #define BYTE_TO_RECEIVE 100
 
-FileClient::FileClient() {
+FileClient::FileClient() : connected(false) {
 
 }
 
@@ -33,8 +33,10 @@ uint64_t FileClient::send(
 	std::string ip = getHost(host);
 	unsigned short host_port = getPort(host);
 
-	Socket host_socket;
-	host_socket.connectTo(ip, host_port);
+	if (!connected) {
+		host_socket.connectTo(ip, host_port);
+		connected = true;
+	}
 
 	uint64_t send_file_event = 0;
 	if (!sendNumber(host_socket, send_file_event)) {
@@ -48,7 +50,7 @@ uint64_t FileClient::send(
 	}
 
 	FILE* file_to_send;
-	file_to_send = fopen(file_path.c_str(), "r");
+	file_to_send = fopen(file_path.c_str(), "rb");
 
 	if (!file_to_send) {
 		std::cerr << "Failed to open file to send" << std::endl;
@@ -85,7 +87,7 @@ uint64_t FileClient::send(
 	}
 
 	uint64_t fileID = getFileID(host_socket);
-	//    std::cout << "FileID: " << fileID << std::endl;
+	    //std::cout << "FileID: " << fileID << std::endl;
 
 	fclose(file_to_send);
 	return fileID;
@@ -95,8 +97,9 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 	std::string ip = getHost(host);
 	unsigned short port = getPort(host);
 
-	Socket host_socket;
-	host_socket.connectTo(ip, port);
+	if (!connected) {
+		host_socket.connectTo(ip, port);
+	}
 
 	uint64_t request_file_event = 1;
 	if (!sendNumber(host_socket, request_file_event)) {
@@ -120,12 +123,12 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 	std::unique_ptr<char[]> file_content(new char[file_size]);
 
 	//TODO: remove
-	uint64_t x;
-	::recv(host_socket, reinterpret_cast<char*>(&x), sizeof(x), 0);
-	std::cout << x << std::endl;
-	::recv(host_socket, reinterpret_cast<char*>(&x), sizeof(x), 0);
-	std::cout << x << std::endl;
-	file_size -= 8 * 2;
+	//uint64_t x;
+	//::recv(host_socket, reinterpret_cast<char*>(&x), sizeof(x), 0);
+	//std::cout << x << std::endl;
+	//::recv(host_socket, reinterpret_cast<char*>(&x), sizeof(x), 0);
+	//std::cout << x << std::endl;
+	//file_size -= 8 * 2;
 
 	int offset = 0;
 	while (file_size > 0) {
