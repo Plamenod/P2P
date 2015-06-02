@@ -17,10 +17,20 @@ struct InfoData{
 
 class FileServer {
 public:
-	FileServer();
+	FileServer(int port);
 	~FileServer();
 
-    virtual bool receive( unsigned short host_port);
+    virtual bool receive();
+    // to get current max id and set next free id
+    std::vector<uint64_t> get_all_ids();
+    void run();
+
+protected:
+    bool doesFileExist();
+    int getPort();
+    void setPort(int new_port);
+    void recover_server();
+    void set_next_free_id();
 
 private:
 
@@ -29,8 +39,11 @@ private:
     /*append current buffer*/
     int append_to_file(int);
     /*append only size of file and unique id*/
-    int initial_append(int);
+    uint64_t initial_append(int);
     uint64_t event_type(int);
+
+    void open_file(const char* moode);
+    void close_file();
 
     std::unique_ptr<char[]> buffer;
     Socket socket;
@@ -42,10 +55,13 @@ private:
     uint64_t get_id_by_client(int);
 
     bool isBind;
-    
-    int  connection_fd;
 
-//    std::vector<uint64_t> all_ids;
+    int port;
+    int  connection_fd;
+    uint64_t next_free_id;
+    std::vector<uint64_t> all_ids;
+
+    uint64_t file_size;
 };
 
 #endif /* SRC_FILE_MANAGER_SERVER_FILESERVER_H_ */

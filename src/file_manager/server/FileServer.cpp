@@ -17,9 +17,9 @@
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
 using namespace std;
-FileServer::FileServer() : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
+FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
 
-    fd = fopen("/home/plamen/workspace/server_project/bin/Debug/test.txt", "rb");
+    fd = fopen("/home/plamen/workspace/server_project/bin/Debug/test.txt", "ab+");
 
     if(fd == NULL)
     {
@@ -28,9 +28,9 @@ FileServer::FileServer() : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
     }
 
     isBind = false;
+    this->port = port;
+    file_size = fseek(fd, 0, SEEK_END);
     memset(buffer.get(), 0, SIZE_BUFFER);
-    info.id = 99; // fake id, it's only for testing
-    //info.size_of_file = 3048;
 }
 
 FileServer::~FileServer() {
@@ -47,11 +47,11 @@ int FileServer::listen(int host_port) {
 }
 
 
-bool FileServer::receive(unsigned short host_port) {
+bool FileServer::receive() {
 
     if(!isBind) {
 
-        connection_fd = listen(host_port);
+        connection_fd = listen(port);
         isBind = true;
     }
 
@@ -62,7 +62,11 @@ bool FileServer::receive(unsigned short host_port) {
 
     if(event_type(connection_fd) != 1) {
 
-        initial_append(connection_fd);
+        if(initial_append(connection_fd)) {
+            cout << "Size of the file is zero!!!\n";
+            /*TODO need to try to receive it again*/
+            exit(1);
+        }
         append_to_file(connection_fd);
 
     } else {
@@ -74,20 +78,29 @@ bool FileServer::receive(unsigned short host_port) {
 
 bool FileServer::recieve_size_of_file(int connection_fd) {
 
-    return ::recv(
+    uint64_t received_bytes = ::recv(
         connection_fd,
         reinterpret_cast<char *>(&info.size_of_file),
         sizeof(uint64_t),
         0);
 
-    return true; // TODO also set ID
+    if(received_bytes) {
+        info.id = next_free_id++;
+        all_ids.push_back(next_free_id);
+    }
+
+    return received_bytes;
 }
 
-int FileServer::initial_append(int connection_fd) {
+uint64_t FileServer::initial_append(int connection_fd) {
 
-    recieve_size_of_file(connection_fd);
+    uint64_t written_bytes = 0;
+    if (recieve_size_of_file(connection_fd)) {
 
-    return fwrite(&info, sizeof(InfoData), 1, fd);
+        written_bytes = fwrite(&info, sizeof(InfoData), 1, fd);
+    }
+
+    return written_bytes;
 }
 
 int FileServer::append_to_file(int connection_fd) {
@@ -142,7 +155,7 @@ void FileServer::send_file_to_client(int newfd) {
 
     uint64_t bytes_to_transfer = 110;//info.size_of_file;
     ::send(newfd, reinterpret_cast<const char*> (&bytes_to_transfer), sizeof(uint64_t), 0);
-    printf(" will send %d bytes!!!\n", bytes_to_transfer);
+    printf(" will send %d bytes!!!\n", static_cast<int>(bytes_to_transfer));
 
     while(bytes_to_transfer > 0) {
 
@@ -168,4 +181,73 @@ uint64_t FileServer::event_type(int connection_fd) {
     ::recv( connection_fd, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0);
     return type;
 }
+
+bool FileServer::doesFileExist() {
+
+    return file_size;
+}
+
+std::vector<uint64_t> FileServer::get_all_ids() {
+
+    return all_ids;
+}
+
+void FileServer::run() {
+
+    if(doesFileExist()) {
+        recover_server();
+    }
+
+    while(true) {
+        receive();
+    }
+
+}
+
+int FileServer::getPort() {
+
+    return port;
+}
+void FileServer::setPort(int new_port) {
+    port = new_port;
+}
+
+void FileServer::recover_server() {
+
+    uint64_t file_sz = file_size;
+    uint64_t read_bytes;
+    InfoData data;
+
+    fseek(fd, 0, SEEK_SET);
+
+    while(file_sz) {
+
+        read_bytes = fread(&data, sizeof(InfoData), 1, fd);
+
+        if(read_bytes != sizeof(InfoData)) {
+            cout << "Can't read InfoData structure !!!\n";
+            exit(1);
+        }
+
+        fseek(fd, data.size_of_file + sizeof(InfoData), SEEK_CUR);
+
+        file_size -= data.size_of_file + sizeof(InfoData);
+
+        all_ids.push_back(data.id);
+    }
+    set_next_free_id();
+}
+
+void FileServer::set_next_free_id() {
+
+    uint64_t max_id = all_ids[0];
+
+    for(auto& iter : all_ids) {
+        if(max_id < iter) {
+            max_id = iter;
+        }
+    }
+    next_free_id = ++max_id;
+}
+
 
