@@ -19,11 +19,11 @@ public:
 		uint16_t file_mgr_port;
 		uint16_t app_port;
 		std::string main_server;
-	} app_settings;
+	} Settings;
 
 
 	App(
-		app_settings settings,
+		Settings settings,
 		std::unique_ptr<FileManagerInterface> fileManager,
 		std::unique_ptr<P2PNetworkInterface> networkManager);
 
@@ -48,7 +48,7 @@ private:
 
 	std::thread * appThread;
 	bool running;
-	app_settings settings;
+	Settings settings;
 };
 
 

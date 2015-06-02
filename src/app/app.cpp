@@ -4,7 +4,7 @@
 #include <thread>
 
 App::App(
-	app_settings settings,
+	Settings settings,
     std::unique_ptr<FileManagerInterface> fileManager,
     std::unique_ptr<P2PNetworkInterface> networkManager):
 	settings(settings),

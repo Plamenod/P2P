@@ -9,7 +9,7 @@
 using namespace std;
 
 int main() {
-	App::app_settings settings;
+	App::Settings settings;
 	settings.app_port = 1001;
 	settings.file_mgr_port = 1002;
 	settings.server_port = 1003;
