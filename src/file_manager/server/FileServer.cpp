@@ -124,7 +124,7 @@ void FileServer::send_info_file_to_client(int newfd) {
 
 uint64_t FileServer::get_id_by_client(int connection_fd) {
     uint64_t id;
-    ::recv(connection_fd, &id, sizeof(uint64_t), 0);
+    ::recv(connection_fd, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0);
     return id;
 }
 
