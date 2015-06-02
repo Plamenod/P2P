@@ -20,6 +20,10 @@ std::unique_ptr<char[]> FileManager::getFile(const std::string & host, uint64_t 
     return std::move(client.getFile(host, id));
 }
 
+void FileManager::stop() {
+    server.stop();
+}
+
 void FileManager::run() {
     server.run();
 }

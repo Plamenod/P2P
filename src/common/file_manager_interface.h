@@ -19,6 +19,7 @@ public:
     virtual std::unique_ptr<char[]> getFile(const std::string & host, uint64_t id) = 0;
 
     virtual void run() = 0;
+    virtual void stop() = 0;
 
 	virtual ~FileManagerInterface(){};
 };

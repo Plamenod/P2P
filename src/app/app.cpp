@@ -24,7 +24,7 @@ void App::run() {
 
 void App::stop() {
     running = false;
-    //fileManager->stop();
+    fileManager->stop();
 
     appThread->join();
     fileMgrThread->join();

@@ -21,6 +21,7 @@ public:
     std::unique_ptr<char[]> getFile(const std::string & host, uint64_t id) override;
 
     void run() override;
+    void stop() override;
 
     ~FileManager();
 };
