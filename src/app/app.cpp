@@ -105,7 +105,6 @@ bool App::addFileToStorage(const std::string & filePath) {
                 break; // next host
             } else {
                 chunkIt->hosts.insert(make_pair(host.address, sentChunkId));
-                chunkIt
             }
         }
         if (chunkIt == chunkEnd) {
