@@ -5,6 +5,7 @@
 #include <utility>
 #include <unordered_map>
 #include <thread>
+#include <map>
 
 #include "../common/p2p_network_interface.h"
 #include "../common/file_manager_interface.h"
@@ -12,6 +13,14 @@
 class App {
 public:
 	typedef std::unordered_map<std::string, std::vector<uint64_t>> host_id_map;
+    typedef struct {
+        uint64_t chunkId;
+        uint64_t start, size;
+        std::vector<std::string> hosts;
+    } FileInfo;
+
+    // for each file - vector of FileInfo for each of the chunks
+    typedef std::map<std::string, std::vector<FileInfo>> FileStorage;
 
 	typedef struct {
 		uint16_t ms_port;
@@ -21,6 +30,7 @@ public:
 		std::string main_server;
 	} Settings;
 
+    enum class FileAvailability { None, Low, Normal, High };
 
 	App(
 		Settings settings,
@@ -34,12 +44,17 @@ public:
 	void run();
 	void stop();
 
+    // file managment
 
-	
+    bool addFileToStorage(const std::string &);
+    FileAvailability isFileInStorage(const std::string &);
+
 
 	// map: host -> it's ids
 	host_id_map getPeersIds();
 private:
+    void checkFilesAvailability();
+
 	void listener();
 
 
@@ -49,6 +64,7 @@ private:
 	std::thread * appThread, * fileMgrThread;
 	bool running;
 	Settings settings;
+    FileStorage storage;
 };
 
 
