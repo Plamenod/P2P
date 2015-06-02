@@ -19,7 +19,7 @@
 using namespace std;
 FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
 
-    fd = fopen("/home/plamen/workspace/server_project/bin/Debug/test.txt", "ab+");
+    fd = fopen("test.txt", "ab+");
 
     if(fd == NULL)
     {
