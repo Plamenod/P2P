@@ -1,6 +1,6 @@
 #include "FileManager.h"
 
-FileManager::FileManager(): server(), client() {
+FileManager::FileManager(uint16_t serverPort): server(serverPort), client() {
 }
 
 uint64_t FileManager::send(
@@ -13,8 +13,7 @@ uint64_t FileManager::send(
 }
 
 std::vector<uint64_t> FileManager::getMyIds() {
-    return std::vector<uint64_t>();
-    //return server.getMyIds();
+    return server.get_all_ids();
 }
 
 std::unique_ptr<char[]> FileManager::getFile(const std::string & host, uint64_t id) {
@@ -22,7 +21,7 @@ std::unique_ptr<char[]> FileManager::getFile(const std::string & host, uint64_t 
 }
 
 void FileManager::run() {
-    //server.run();
+    server.run();
 }
 
 FileManager::~FileManager() {

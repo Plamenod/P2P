@@ -9,7 +9,7 @@ class FileManager : public FileManagerInterface {
     FileClient client;
     FileServer server;
 public:
-    FileManager();
+    FileManager(uint16_t serverPort);
 
     uint64_t send(
         const std::string & host,

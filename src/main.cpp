@@ -19,8 +19,8 @@ int main() {
 	
 	App app(
 		settings,
-		std::unique_ptr<FileManagerInterface>(new FileManager()), 
-		std::unique_ptr<P2PNetworkInterface>(new P2PNode()));
+		std::unique_ptr<FileManagerInterface>(new FileManager(settings.file_mgr_port)), 
+		std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, settings.server_port, settings.file_mgr_port)));
 
 	app.run();
 
