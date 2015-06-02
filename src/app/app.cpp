@@ -10,7 +10,29 @@ App::App(
     networkManager(std::move(networkManager)) {}
 
 void App::run() {
-    while(1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+	running = true;
+	//networkManager->run();
+	fileManager->run();
+	appThread = new std::thread(std::bind(&App::listener, this));
 }
+
+void App::stop() {
+	running = false;
+	appThread->join();
+	delete appThread;
+}
+
+App::~App() {
+	stop();
+}
+
+void App::listener() {
+	// bind, listen and return fileManager->myIds();
+	// stop when this->running == false
+}
+
+App::host_id_map App::getPeersIds() {
+	// connect to all networkManager->get_peers() and get their ids
+	return host_id_map();
+}
+
