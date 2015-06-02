@@ -214,12 +214,13 @@ std::vector<uint64_t> FileServer::get_all_ids() {
 }
 
 void FileServer::run() {
+    isRun = true;
 
     if(doesFileExist()) {
         recover_server();
     }
 
-    while(true) {
+    while(isRun) {
         receive();
     }
 
@@ -269,6 +270,10 @@ void FileServer::set_next_free_id() {
         }
     }
     next_free_id = ++max_id;
+}
+void FileServer::stop()
+{
+    isRun = false;
 }
 
 

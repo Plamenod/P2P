@@ -24,6 +24,7 @@ public:
     // to get current max id and set next free id
     std::vector<uint64_t> get_all_ids();
     void run();
+    void stop();
 
 protected:
     bool doesFileExist();
@@ -63,6 +64,7 @@ private:
     std::vector<uint64_t> all_ids;
 
     uint64_t file_size;
+    bool isRun;
 };
 
 #endif /* SRC_FILE_MANAGER_SERVER_FILESERVER_H_ */
