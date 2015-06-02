@@ -11,7 +11,7 @@
 #include <errno.h>
 #endif
 
-#define MSPORT 23456
+#define MSPORT 5005
 #define BUFFER_SIZE 16384
 
 void P2PMainServer::start()
