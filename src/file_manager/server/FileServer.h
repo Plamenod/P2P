@@ -31,6 +31,7 @@ protected:
     void setPort(int new_port);
     void recover_server();
     void set_next_free_id();
+    uint64_t seek_2_file(uint64_t id);
 
 private:
 

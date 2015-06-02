@@ -145,15 +145,12 @@ void FileServer::send_file_to_client(int newfd) {
 
     uint64_t id = get_id_by_client(newfd);
 
-    // while(fread(&info, sizeof(InfoData), 1, fd)) {
+    uint64_t bytes_to_transfer = seek_2_file(id);
 
-    //     if(info.id != id) {
-    //         fseek(fd, info.size_of_file, SEEK_CUR);
-    //     }
-    //     // TODO check if the id was not found
-    // }
+    if(bytes_to_transfer == 0) {
+        cout << "ERROR: you are trying to get file with wrong id!!!\n";
+    }
 
-    uint64_t bytes_to_transfer = 110;//info.size_of_file;
     ::send(newfd, reinterpret_cast<const char*> (&bytes_to_transfer), sizeof(uint64_t), 0);
     printf(" will send %d bytes!!!\n", static_cast<int>(bytes_to_transfer));
 
@@ -174,6 +171,30 @@ void FileServer::send_file_to_client(int newfd) {
 
         cout << k << ' ' << s << ' ' << bytes_to_transfer << endl;
     }
+}
+
+uint64_t FileServer::seek_2_file(uint64_t id) {
+
+    if(!all_ids.size()) {
+        return 0;
+    }
+
+    InfoData data;
+    uint64_t sz = file_size;
+    fseek(fd, 0, SEEK_SET);
+
+    while(sz > 0) {
+
+        fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
+        if(id == data.id) {
+            fseek(fd, sizeof(InfoData), SEEK_CUR);
+            return data.size_of_file;
+        }
+        fseek(fd, data.size_of_file + sizeof(InfoData), SEEK_CUR);
+        sz -= data.size_of_file + sizeof(InfoData);
+    }
+
+    return 0;
 }
 
 uint64_t FileServer::event_type(int connection_fd) {
@@ -222,7 +243,7 @@ void FileServer::recover_server() {
 
     while(file_sz) {
 
-        read_bytes = fread(&data, sizeof(InfoData), 1, fd);
+        read_bytes = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
 
         if(read_bytes != sizeof(InfoData)) {
             cout << "Can't read InfoData structure !!!\n";
