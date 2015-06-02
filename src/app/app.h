@@ -14,9 +14,8 @@ class App {
 public:
 	typedef std::unordered_map<std::string, std::vector<uint64_t>> host_id_map;
     typedef struct {
-        uint64_t chunkId;
         uint64_t start, size;
-        std::vector<std::string> hosts;
+        std::unordered_map<std::string, uint64_t> hosts;
     } FileInfo;
 
     // for each file - vector of FileInfo for each of the chunks
@@ -52,6 +51,8 @@ public:
 
 	// map: host -> it's ids
 	host_id_map getPeersIds();
+
+    const static uint64_t fileChunkSize = 1 << 20; // 1 mb
 private:
     void checkFilesAvailability();
 

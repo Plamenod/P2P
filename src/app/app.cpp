@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <algorithm>
+#include <fstream>
 
 App::App(
     Settings settings,
@@ -54,10 +55,71 @@ App::host_id_map App::getPeersIds() {
 }
 
 
+namespace {
+    //TODO: make cleaner impl, maybe move to fileManager?
+    std::vector<App::FileInfo> chunkifyFile(const std::string & filePath) {
+        std::ifstream file(filePath, std::ios::in | std::ios::binary);
+        file.seekg(0, std::ios::end);
+        uint64_t size = file.tellg();
+        file.close();
+
+        std::vector<App::FileInfo> chunks;
+
+        uint64_t c = 0;
+        // push chunks with size App::fileChunkSize
+        for (; size >= App::fileChunkSize; c += App::fileChunkSize) {
+            chunks.push_back({ c, App::fileChunkSize, {} });
+            size -= App::fileChunkSize;
+        }
+
+        // if there is more of the file, make it last chunk
+        if (size > 0) {
+            chunks.push_back({ c, size, {} });
+        }
+
+        return chunks;
+    }
+}
 
 
 bool App::addFileToStorage(const std::string & filePath) {
-    return false;
+    if (storage.find(filePath) != storage.end()) {
+        return false;
+    }
+
+    const auto & peers = networkManager->get_peers();
+
+    std::vector<FileInfo> fileChunks = chunkifyFile(filePath);
+
+    int chunksPerHost =
+        ((fileChunks.size() * static_cast<int>(FileAvailability::High)) / peers.size()) + 1;
+
+    auto chunkIt = fileChunks.begin(), chunkEnd = fileChunks.end();
+    for (const auto & host : peers) {
+        for (int c = 0; c < chunksPerHost && chunkIt != chunkEnd; ++c, ++chunkIt) {
+
+            uint64_t sentChunkId = fileManager->send(
+                host.address, filePath, chunkIt->start, chunkIt->start + chunkIt->size);
+
+            if (sentChunkId == 0) {
+                break; // next host
+            } else {
+                chunkIt->hosts.insert(make_pair(host.address, sentChunkId));
+                chunkIt
+            }
+        }
+        if (chunkIt == chunkEnd) {
+            break;
+        }
+    }
+
+    if (chunkIt != chunkEnd) {
+        // maybe go trough hosts and remove sent chunks
+        return false;
+    }
+
+    storage[filePath] = fileChunks;
+    return true;
 }
 
 App::FileAvailability App::isFileInStorage(const std::string & filePath) {
@@ -66,15 +128,16 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
         return FileAvailability::None;
     }
 
-    auto peers = networkManager->get_peers();
+    const auto & peers = networkManager->get_peers();
     FileAvailability fileStatus = FileAvailability::High;
 
+    // Go trough all of the chunks and check which of them has fewest connected hosts
     for (auto & chunk : file->second) {
         int currentChunk = 0;
         for (auto & host : chunk.hosts) {
             currentChunk +=
                 std::any_of(peers.begin(), peers.end(), [&host](const PeerInfo & info) {
-                    return info.address == host && info.connected;
+                    return info.address == host.first && info.connected;
                 });
         }
         fileStatus = static_cast<FileAvailability>(

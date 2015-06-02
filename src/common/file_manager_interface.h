@@ -11,7 +11,7 @@ public:
 
 	virtual uint64_t send(
 		const std::string & host,
-		std::string & file_path,
+		const std::string & file_path,
 		uint64_t from = 0,
 		uint64_t to = -1) = 0;
 
