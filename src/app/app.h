@@ -10,13 +10,20 @@
 #include "../common/file_manager_interface.h"
 
 class App {
-	std::unique_ptr<FileManagerInterface> fileManager;
-	std::unique_ptr<P2PNetworkInterface> networkManager;
-
-	std::thread * appThread;
-	bool running;
 public:
+	typedef std::unordered_map<std::string, std::vector<uint64_t>> host_id_map;
+
+	typedef struct {
+		uint16_t ms_port;
+		uint16_t server_port;
+		uint16_t file_mgr_port;
+		uint16_t app_port;
+		std::string main_server;
+	} app_settings;
+
+
 	App(
+		app_settings settings,
 		std::unique_ptr<FileManagerInterface> fileManager,
 		std::unique_ptr<P2PNetworkInterface> networkManager);
 
@@ -27,12 +34,21 @@ public:
 	void run();
 	void stop();
 
-	typedef std::unordered_map<std::string, std::vector<uint64_t>> host_id_map;
+
+	
 
 	// map: host -> it's ids
 	host_id_map getPeersIds();
 private:
 	void listener();
+
+
+	std::unique_ptr<FileManagerInterface> fileManager;
+	std::unique_ptr<P2PNetworkInterface> networkManager;
+
+	std::thread * appThread;
+	bool running;
+	app_settings settings;
 };
 
 

@@ -1,7 +1,7 @@
 project(FileManager)
 
 file(GLOB HEADERS "server/*.h" "client/*.h" "*.h")
-file(GLOB SOURCES "server/*.cpp" "client/*.cpp")
+file(GLOB SOURCES "server/*.cpp" "client/*.cpp" "*.cpp")
 
 file(GLOB COMMON_HEADERS "../common/*.h")
 

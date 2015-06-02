@@ -4,14 +4,19 @@
 #include <thread>
 
 App::App(
+	app_settings settings,
     std::unique_ptr<FileManagerInterface> fileManager,
     std::unique_ptr<P2PNetworkInterface> networkManager):
+	settings(settings),
     fileManager(std::move(fileManager)),
-    networkManager(std::move(networkManager)) {}
+    networkManager(std::move(networkManager)) {
+	
+	networkManager->setPorts(settings.ms_port, settings.server_port, settings.file_mgr_port);
+}
 
 void App::run() {
 	running = true;
-	//networkManager->run();
+	networkManager->start(settings.main_server);
 	fileManager->run();
 	appThread = new std::thread(std::bind(&App::listener, this));
 }
@@ -27,12 +32,12 @@ App::~App() {
 }
 
 void App::listener() {
-	// bind, listen and return fileManager->myIds();
+	// bind, listen on settings.app_port and return fileManager->myIds();
 	// stop when this->running == false
 }
 
 App::host_id_map App::getPeersIds() {
-	// connect to all networkManager->get_peers() and get their ids
+	// connect to all networkManager->get_peers():settings.app_port and get their ids
 	return host_id_map();
 }
 

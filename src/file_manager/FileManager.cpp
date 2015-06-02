@@ -18,8 +18,7 @@ std::vector<uint64_t> FileManager::getMyIds() {
 }
 
 std::unique_ptr<char[]> FileManager::getFile(const std::string & host, uint64_t id) {
-    return std::unique_ptr<char[]>(nullptr);
-    //return std::move(client.getFile(host, id));
+    return std::move(client.getFile(host, id));
 }
 
 void FileManager::run() {

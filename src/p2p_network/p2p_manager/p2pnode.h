@@ -21,8 +21,8 @@ public:
     virtual ~P2PNode(){}
     virtual std::vector<PeerInfo> get_peers() const;
 
-    void start(const std::string& server_ip);
-    void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
+    virtual void start(const std::string& server_ip);
+    virtual void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
 private:
     P2PClient client;
     P2PServer server;
