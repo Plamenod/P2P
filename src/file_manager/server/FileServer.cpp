@@ -40,6 +40,7 @@ FileServer::~FileServer() {
 
 int FileServer::listen(int host_port) {
 
+    socket.makeNonblocking();
     socket.bindTo(host_port);
     ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 
@@ -57,7 +58,8 @@ bool FileServer::receive() {
 
     if (connection_fd < 0) {
         cerr << "ERROR on accept\n";
-        exit(1);  // TODO remove it
+        return false;
+        //exit(1);  // TODO remove it
     }
 
     if(event_type(connection_fd) != 1) {
