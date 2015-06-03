@@ -12,7 +12,7 @@
 
 class App {
 public:
-	typedef std::unordered_map<std::string, std::vector<uint64_t>> host_id_map;
+    typedef std::unordered_map<std::string, std::vector<uint64_t>> host_id_map;
     typedef struct {
         uint64_t start, size;
         std::unordered_map<std::string, uint64_t> hosts;
@@ -21,27 +21,27 @@ public:
     // for each file - vector of FileInfo for each of the chunks
     typedef std::map<std::string, std::vector<FileInfo>> FileStorage;
 
-	typedef struct {
-		uint16_t ms_port;
-		uint16_t server_port;
-		uint16_t file_mgr_port;
-		uint16_t app_port;
-		std::string main_server;
-	} Settings;
+    typedef struct {
+        uint16_t ms_port;
+        uint16_t server_port;
+        uint16_t file_mgr_port;
+        uint16_t app_port;
+        std::string main_server;
+    } Settings;
 
     enum class FileAvailability { None, Low, Normal, High };
 
-	App(
-		Settings settings,
-		std::unique_ptr<FileManagerInterface> fileManager,
-		std::unique_ptr<P2PNetworkInterface> networkManager);
+    App(
+        Settings settings,
+        std::unique_ptr<FileManagerInterface> fileManager,
+        std::unique_ptr<P2PNetworkInterface> networkManager);
 
-	App(const App &) = delete;
-	App & operator=(const App &) = delete;
-	~App();
+    App(const App &) = delete;
+    App & operator=(const App &) = delete;
+    ~App();
 
-	void run();
-	void stop();
+    void run();
+    void stop();
 
     // file managment
 
@@ -49,22 +49,22 @@ public:
     FileAvailability isFileInStorage(const std::string &);
 
 
-	// map: host -> it's ids
-	host_id_map getPeersIds();
+    // map: host -> it's ids
+    host_id_map getPeersIds();
 
     const static uint64_t fileChunkSize = 1 << 20; // 1 mb
 private:
     void checkFilesAvailability();
 
-	void listener();
+    void listener();
 
 
-	std::unique_ptr<FileManagerInterface> fileManager;
-	std::unique_ptr<P2PNetworkInterface> networkManager;
+    std::unique_ptr<FileManagerInterface> fileManager;
+    std::unique_ptr<P2PNetworkInterface> networkManager;
 
-	std::thread * appThread, * fileMgrThread;
-	bool running;
-	Settings settings;
+    std::thread * appThread, * fileMgrThread;
+    bool running;
+    Settings settings;
     FileStorage storage;
 };
 

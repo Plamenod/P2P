@@ -24,28 +24,28 @@ class Socket{
 
 public:
 
-	Socket(int fdesc = INVALID_SOCKFD);
+    Socket(int fdesc = INVALID_SOCKFD);
 
-	Socket(const Socket& other) = delete;
-	Socket& operator =(const Socket& other) = delete;
+    Socket(const Socket& other) = delete;
+    Socket& operator =(const Socket& other) = delete;
 
-	~Socket();
+    ~Socket();
 
-	operator int() const { return fd; };
-	int getFd() const { return fd; };
+    operator int() const { return fd; };
+    int getFd() const { return fd; };
 
-	void bindTo(unsigned short port) const;
-	void connectTo(const std::string& ip, uint16_t port) const;
-	void connectTo(const sockaddr_in* server_addr) const;
+    void bindTo(unsigned short port) const;
+    void connectTo(const std::string& ip, uint16_t port) const;
+    void connectTo(const sockaddr_in* server_addr) const;
 
-	void addOption(int option = SO_REUSEADDR);
-	void makeNonblocking() const;
+    void addOption(int option = SO_REUSEADDR);
+    void makeNonblocking() const;
 
-	bool listen() const;
-	ClientInfo accept() const;
+    bool listen() const;
+    ClientInfo accept() const;
 
 private:
-	int fd;
+    int fd;
 };
 
 #endif // SOCKET

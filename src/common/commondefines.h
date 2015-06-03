@@ -22,8 +22,8 @@ enum Command: char {
 };
 
 struct PeerInfo {
-	std::string address;
-	bool connected;
+    std::string address;
+    bool connected;
 };
 
 struct ServerInfo {
@@ -33,11 +33,11 @@ struct ServerInfo {
 };
 
 struct ClientInfo {
-	sockaddr_in addr;
-	bool connected;
-	int sock_fd;
-	uint16_t server_port;
-	uint16_t file_mgr_port;
+    sockaddr_in addr;
+    bool connected;
+    int sock_fd;
+    uint16_t server_port;
+    uint16_t file_mgr_port;
 };
 
 

@@ -3,10 +3,10 @@
 
 
 #ifndef C_WIN_SOCK
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
 #else
 
 #endif
@@ -47,7 +47,7 @@ size_t P2PClient::send(const void* buf, size_t size, int flags) const
 
 size_t P2PClient::recv(void* buf, size_t size, int flags) const
 {
-	return ::recv(socket.getFd(), reinterpret_cast<char *>(buf), size, flags);
+    return ::recv(socket.getFd(), reinterpret_cast<char *>(buf), size, flags);
 }
 
 void P2PClient::sendPortsToMainServer() const

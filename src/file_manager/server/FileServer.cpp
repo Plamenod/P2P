@@ -2,10 +2,10 @@
 #include "socket.h"
 
 #ifndef C_WIN_SOCK
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <unistd.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <unistd.h>
 #endif
 
 #include <stdio.h>

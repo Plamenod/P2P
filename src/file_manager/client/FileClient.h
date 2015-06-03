@@ -9,8 +9,8 @@
 
 class FileClient {
 public:
-	FileClient();
-	virtual ~FileClient();
+    FileClient();
+    virtual ~FileClient();
 
     /**
     * @brief send file with range (from, to) to host
@@ -43,8 +43,8 @@ private:
     */
     uint64_t getFileID(const Socket& host_socket);
 
-	Socket host_socket;
-	bool connected;
+    Socket host_socket;
+    bool connected;
 
 };
 

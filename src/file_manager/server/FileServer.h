@@ -17,8 +17,8 @@ struct InfoData{
 
 class FileServer {
 public:
-	FileServer(int port);
-	~FileServer();
+    FileServer(int port);
+    ~FileServer();
 
     virtual bool receive();
     // to get current max id and set next free id
