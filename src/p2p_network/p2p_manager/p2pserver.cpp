@@ -8,16 +8,16 @@ void P2PServer::setPorts(uint16_t port)
     this->port = port;
 }
 
-void P2PServer::start() const
+void P2PServer::start(bool& flag) const
 {
 	this->socket.bindTo(port);
 	std::cout << "P2P server listening at port " << port << std::endl;
-    this->run();
+    this->run(flag);
 }
 
-void P2PServer::run() const
+void P2PServer::run(bool& flag) const
 {
-    while(true) {
+    while(flag) {
         ClientInfo client = socket.accept();
         if (client.sock_fd == -1) {
             continue;

@@ -52,7 +52,7 @@ void Socket::bindTo(unsigned short port) const
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = htonl(ADDR_ANY);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	if(addr.sin_addr.s_addr == -1){
 		std::cerr << "Socket::bind_to : error converting address to int!\n";
 		exit(1);
@@ -79,7 +79,7 @@ void Socket::bindTo(unsigned short port) const
 }
 
 
-void Socket::connectTo(const std::string& ip, uint16_t port) const
+int Socket::connectTo(const std::string& ip, uint16_t port) const
 {
 	sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
@@ -87,22 +87,15 @@ void Socket::connectTo(const std::string& ip, uint16_t port) const
 	server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
 	if(server_addr.sin_addr.s_addr == (-1)) {
-		std::cerr << "Cannot connect to server !" << std::endl;
-		exit(1);
+		return -1;
 	}
 
-	if(connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr))) {
-		std::cerr << "Cannot connect to server !" << std::endl;
-		exit(1);
-	}
+	return connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr));
 }
 
-void Socket::connectTo(const sockaddr_in* server_addr) const
+int Socket::connectTo(const sockaddr_in* server_addr) const
 {
-	if(connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr))) {
-		std::cerr << "Cannot connect to server !" << std::endl;
-		exit(1);
-	}
+    return connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr));
 }
 
 void Socket::addOption(int option)
