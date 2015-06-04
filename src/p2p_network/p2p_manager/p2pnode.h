@@ -23,6 +23,8 @@ public:
     virtual std::vector<PeerInfo> get_peers() const;
 
     virtual void start(const std::string& server_ip);
+    virtual void stop();
+
     virtual void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
 
     void startServer();

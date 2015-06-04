@@ -19,6 +19,10 @@ void P2PNode::start(const std::string& server_ip)
     startServer();
 }
 
+void P2PNode::stop() {
+    stopServer();
+}
+
 void P2PNode::startServer()
 {
     server_flag = true;

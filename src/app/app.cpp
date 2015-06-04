@@ -31,13 +31,15 @@ void App::run() {
 
 void App::stop() {
     running = false;
-    fileManager->stop();
+
+    fileMgrThread->join();
+    delete fileMgrThread;
 
     appThread->join();
-    fileMgrThread->join();
-
-    delete fileMgrThread;
     delete appThread;
+
+    fileManager->stop();
+    networkManager->stop();
 }
 
 App::~App() {
