@@ -10,8 +10,8 @@ void P2PServer::setPorts(uint16_t port)
 
 void P2PServer::start(bool& flag) const
 {
-	this->socket.bindTo(port);
-	std::cout << "P2P server listening at port " << port << std::endl;
+    this->socket.bindTo(port);
+    std::cout << "P2P server listening at port " << port << std::endl;
     this->run(flag);
 }
 

@@ -27,19 +27,19 @@ void P2PMainServer::start()
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
 
-	std::cout << "Server waiting for connections at port " << MSPORT << std::endl;
-	while(true) {
+    std::cout << "Server waiting for connections at port " << MSPORT << std::endl;
+    while(true) {
         serveConnectedClients(buffer);
-	    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		ClientInfo current_client = this->socket.accept();
-		if(current_client.sock_fd == -1) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        ClientInfo current_client = this->socket.accept();
+        if(current_client.sock_fd == -1) {
             continue;
-		}
-		handleClientConnect(current_client);
-		char* client_ip_addr = inet_ntoa(current_client.addr.sin_addr);
-		std::cout << "Accepted connection from " << client_ip_addr << std::endl;
-		std::cout << "File descriptor " << current_client.sock_fd << std::endl;
-	}
+        }
+        handleClientConnect(current_client);
+        char* client_ip_addr = inet_ntoa(current_client.addr.sin_addr);
+        std::cout << "Accepted connection from " << client_ip_addr << std::endl;
+        std::cout << "File descriptor " << current_client.sock_fd << std::endl;
+    }
 }
 
 size_t P2PMainServer::recv(int fd, void* buf, size_t buf_size, int flags) const

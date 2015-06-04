@@ -80,16 +80,16 @@ void Socket::bindTo(unsigned short port) const
 
 int Socket::connectTo(const std::string& ip, uint16_t port) const
 {
-	sockaddr_in server_addr;
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(port);
-	server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
-	if(server_addr.sin_addr.s_addr == (-1)) {
-		return -1;
-	}
+    if(server_addr.sin_addr.s_addr == (-1)) {
+        return -1;
+    }
 
-	return connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr));
+    return connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr));
 }
 
 int Socket::connectTo(const sockaddr_in* server_addr) const
