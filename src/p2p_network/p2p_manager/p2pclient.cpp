@@ -35,7 +35,10 @@ void P2PClient::setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_m
 void P2PClient::connectToServer(const std::string& ip)
 {
     setServerIP(ip);
-    socket.connectTo(ip, main_server_port);
+    if(socket.connectTo(ip, main_server_port)) {
+        std::cerr << "Cannot connect to server !" << std::endl;
+        exit(1);
+    }
     std::cout << "Connected to " << ip << " " << main_server_port << std::endl;
     sendPortsToMainServer();
 }
@@ -80,7 +83,7 @@ void P2PClient::sendPortsToMainServer() const
 void P2PClient::getPeersInfo(std::vector<PeerInfo>& result) const
 {
     Command cmd = Command::GET_PEERS;
-    size_t sent;
+    int sent;
     for(int i = 0; i < retries; ++i) {
         sent = send(&cmd, sizeof(cmd));
         if(sent > 0) {
@@ -120,17 +123,20 @@ void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
 
     PeerInfo peer_info_tmp;
 
+    int sizeof_peer = sizeof(ip_addr) + sizeof(server_port) + sizeof(file_mgr_port);
     for(int i = 0; i < number_of_peers; ++i) {
         std::stringstream strstream;
-        int offset = numb_of_peers_size + i;
+
+        int offset = numb_of_peers_size + i * sizeof_peer;
         ip_addr = *((uint32_t*)(buff_ptr + offset));
 
         for(int j = 0; j < 4; ++j) {
             uint8_t* ip_addr_ptr = (uint8_t*)&ip_addr;
             ip_addr_part = *((uint8_t*)(ip_addr_ptr + j));
-            strstream << ip_addr_part;
-            if(i < 3) strstream << ".";
+            strstream << (int)ip_addr_part;
+            if(j < 3) strstream << ".";
         }
+
         offset += ip_addr_size;
         server_port = *((uint16_t*)(buff_ptr + offset));
         offset += sizeof(server_port);

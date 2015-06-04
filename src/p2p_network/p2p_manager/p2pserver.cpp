@@ -8,16 +8,20 @@ void P2PServer::setPorts(uint16_t port)
     this->port = port;
 }
 
-void P2PServer::start() const
+void P2PServer::start(bool& flag) const
 {
-    this->socket.bindTo(port);
-    std::cout << "P2P server listening at port " << port << std::endl;
+	this->socket.bindTo(port);
+	std::cout << "P2P server listening at port " << port << std::endl;
+    this->run(flag);
 }
 
-void P2PServer::run() const
+void P2PServer::run(bool& flag) const
 {
-    while(true) {
+    while(flag) {
         ClientInfo client = socket.accept();
+        if (client.sock_fd == -1) {
+            continue;
+        }
         char* ip_addr = inet_ntoa(client.addr.sin_addr);
         std::cout << "Accepted a client with ip " << ip_addr << std::endl;
 #ifdef C_WIN_SOCK

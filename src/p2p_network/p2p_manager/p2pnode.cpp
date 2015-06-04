@@ -16,5 +16,17 @@ void P2PNode::setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr
 void P2PNode::start(const std::string& server_ip)
 {
     client.connectToServer(server_ip);
-    server.start();
+    startServer();
+}
+
+void P2PNode::startServer()
+{
+    server_flag = true;
+    server_thread = std::thread(&P2PServer::start, &server, std::ref(server_flag));
+}
+
+void P2PNode::stopServer()
+{
+    server_flag = false;
+    server_thread.join();
 }

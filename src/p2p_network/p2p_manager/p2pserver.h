@@ -15,11 +15,11 @@ public:
 
     ~P2PServer() {};
 
-    void setPorts(uint16_t port);
-    void start() const;
+	void setPorts(uint16_t port);
+	void start(bool& flag) const;
 
 private:
-    void run() const;
+    void run(bool& flag) const;
 
     Socket socket;
     uint16_t port;
