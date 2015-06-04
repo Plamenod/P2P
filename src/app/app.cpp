@@ -23,10 +23,9 @@ void App::run() {
     running = true;
     networkManager->start(settings.main_server);
 
-    fileMgrThread = new std::thread(
-        std::bind(&FileManagerInterface::run, &*fileManager));
+    fileMgrThread = new std::thread(&FileManagerInterface::run, &*fileManager);
 
-    appThread = new std::thread(std::bind(&App::listener, this));
+    appThread = new std::thread(&App::listener, this);
 }
 
 void App::stop() {
