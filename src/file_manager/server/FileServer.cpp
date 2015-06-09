@@ -17,7 +17,8 @@
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
 using namespace std;
-FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER])) {
+FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER]))
+{
 
     fd = fopen("test.txt", "ab+");
 
@@ -29,18 +30,21 @@ FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFE
 
     isBind = false;
     this->port = port;
-    file_size = fseek(fd, 0, SEEK_END);
+    fseek(fd, 0, SEEK_END);
+    file_size = ftell(fd);
     memset(buffer.get(), 0, SIZE_BUFFER);
+    recover_server();
 }
 
-FileServer::~FileServer() {
+FileServer::~FileServer()
+{
     fclose(fd);
 }
 
 
-int FileServer::listen(int host_port) {
-
-    socket.makeNonblocking();
+int FileServer::listen(int host_port)
+{
+  //  socket.makeNonblocking();
     socket.bindTo(host_port);
     ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 
@@ -48,37 +52,46 @@ int FileServer::listen(int host_port) {
 }
 
 
-bool FileServer::receive() {
+bool FileServer::receive()
+{
 
-    if(!isBind) {
-
+    if(!isBind)
+    {
         connection_fd = listen(port);
+        cout << "listening\n" << connection_fd;
         isBind = true;
     }
 
-    if (connection_fd < 0) {
+    if (connection_fd < 0)
+    {
         cerr << "ERROR on accept\n";
         return false;
         //exit(1);  // TODO remove it
     }
 
-    if(event_type(connection_fd) != 1) {
+    if(event_type(connection_fd) != 1)
+    {
 
-        if(initial_append(connection_fd)) {
-            cout << "Size of the file is zero!!!\n";
-            /*TODO need to try to receive it again*/
-            exit(1);
-        }
+        //if() {
+        //    cout << "Size of the file is zero!!!\n";
+        //    /*TODO need to try to receive it again*/
+        //    exit(1);
+        //}
+        initial_append(connection_fd);
         append_to_file(connection_fd);
 
-    } else {
+    }
+
+    else
+    {
 
         send_file_to_client(connection_fd);
     }
     return true/*TODO*/;
 }
 
-bool FileServer::recieve_size_of_file(int connection_fd) {
+bool FileServer::recieve_size_of_file(int connection_fd)
+{
 
     uint64_t received_bytes = ::recv(
         connection_fd,
@@ -86,7 +99,8 @@ bool FileServer::recieve_size_of_file(int connection_fd) {
         sizeof(uint64_t),
         0);
 
-    if(received_bytes) {
+    if(received_bytes)
+    {
         info.id = next_free_id++;
         all_ids.push_back(next_free_id);
     }
@@ -94,24 +108,25 @@ bool FileServer::recieve_size_of_file(int connection_fd) {
     return received_bytes;
 }
 
-uint64_t FileServer::initial_append(int connection_fd) {
+uint64_t FileServer::initial_append(int connection_fd)
+{
 
     uint64_t written_bytes = 0;
-    if (recieve_size_of_file(connection_fd)) {
-
+    if (recieve_size_of_file(connection_fd))
+    {
         written_bytes = fwrite(&info, sizeof(InfoData), 1, fd);
     }
 
     return written_bytes;
 }
 
-int FileServer::append_to_file(int connection_fd) {
-
-
+int FileServer::append_to_file(int connection_fd)
+{
     int read_bytes = -1;
     uint64_t size_of_file = info.size_of_file;
-    while(size_of_file) {
 
+    while(size_of_file)
+    {
         read_bytes = ::recv(connection_fd, buffer.get(), SIZE_BUFFER, 0);
 
         fwrite(buffer.get(), sizeof(char), read_bytes, fd);
@@ -120,16 +135,18 @@ int FileServer::append_to_file(int connection_fd) {
         cout << size_of_file << endl;
 
     }
+
     ::send(connection_fd, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
 
-    if (read_bytes < 0) {
+    if (read_bytes < 0)
+    {
         std::cerr << "ERROR writing to socket";
     }
     return false;
 }
 
-void FileServer::send_info_file_to_client(int newfd) {
-
+void FileServer::send_info_file_to_client(int newfd)
+{
     ::send(
         newfd,
         reinterpret_cast<const char *>(&info.size_of_file),
@@ -137,137 +154,180 @@ void FileServer::send_info_file_to_client(int newfd) {
         0);
 }
 
-uint64_t FileServer::get_id_by_client(int connection_fd) {
+uint64_t FileServer::get_id_by_client(int connection_fd)
+{
     uint64_t id;
+
     ::recv(connection_fd, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0);
+
     return id;
 }
 
-void FileServer::send_file_to_client(int newfd) {
+void FileServer::send_file_to_client(int newfd)
+{
 
     uint64_t id = get_id_by_client(newfd);
 
     uint64_t bytes_to_transfer = seek_2_file(id);
 
-    if(bytes_to_transfer == 0) {
+    if(bytes_to_transfer == 0)
+    {
         cout << "ERROR: you are trying to get file with wrong id!!!\n";
     }
 
     ::send(newfd, reinterpret_cast<const char*> (&bytes_to_transfer), sizeof(uint64_t), 0);
     printf(" will send %d bytes!!!\n", static_cast<int>(bytes_to_transfer));
 
-    while(bytes_to_transfer > 0) {
+    while(bytes_to_transfer > 0)
+    {
 
         int k = fread(buffer.get(), sizeof(char), 55, this->fd);
-        if ( ferror(fd) ) {
+
+        if ( ferror(fd) )
+        {
                 cout << "ERROR";
-            }
-            else if ( feof(fd) ) {
-                cout << "EOF" << endl;
-            }
+        }
+
+        else if ( feof(fd) )
+        {
+            cout << "EOF" << endl;
+            break;
+        }
+
         bytes_to_transfer -= k;
+
         int s = ::send(newfd, buffer.get(), k, 0);
-        if(k != s) {
+
+        if(k != s)
+        {
             cout << "Wrong k and s \n";
         }
 
+        if(bytes_to_transfer > 0 && bytes_to_transfer < 55)
+        {
+            fread(buffer.get(), sizeof(char), bytes_to_transfer, this->fd);
+            s =  ::send(newfd, buffer.get(), k, 0);
+            cout << k << ' ' << s << ' ' << bytes_to_transfer << endl;
+            break;
+        }
         cout << k << ' ' << s << ' ' << bytes_to_transfer << endl;
     }
 }
 
-uint64_t FileServer::seek_2_file(uint64_t id) {
-
-    if(!all_ids.size()) {
-        return 0;
-    }
-
+uint64_t FileServer::seek_2_file(uint64_t id)
+{
     InfoData data;
     uint64_t sz = file_size;
+
     fseek(fd, 0, SEEK_SET);
 
-    while(sz > 0) {
+    while(sz > 0)
+    {
+        int b = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
 
-        fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
-        if(id == data.id) {
-            fseek(fd, sizeof(InfoData), SEEK_CUR);
+        if(id == data.id)
+        {
             return data.size_of_file;
         }
-        fseek(fd, data.size_of_file + sizeof(InfoData), SEEK_CUR);
+
+        fseek(fd, data.size_of_file /*+ sizeof(InfoData)*/, SEEK_CUR);
+
         sz -= data.size_of_file + sizeof(InfoData);
     }
 
     return 0;
 }
 
-uint64_t FileServer::event_type(int connection_fd) {
+uint64_t FileServer::event_type(int connection_fd)
+{
     uint64_t type;
+
     ::recv( connection_fd, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0);
+
     return type;
 }
 
-bool FileServer::doesFileExist() {
-
+bool FileServer::doesFileExist()
+{
     return file_size;
 }
 
-std::vector<uint64_t> FileServer::get_all_ids() {
-
+std::vector<uint64_t> FileServer::get_all_ids()
+{
     return all_ids;
 }
 
-void FileServer::run() {
+void FileServer::run()
+{
     isRun = true;
 
-    if(doesFileExist()) {
+    if(doesFileExist())
+    {
         recover_server();
     }
 
-    while(isRun) {
+    while(isRun)
+    {
         receive();
     }
 
 }
 
-int FileServer::getPort() {
-
+int FileServer::getPort()
+{
     return port;
 }
-void FileServer::setPort(int new_port) {
+
+void FileServer::setPort(int new_port)
+{
     port = new_port;
 }
 
-void FileServer::recover_server() {
-
+void FileServer::recover_server()
+{
     uint64_t file_sz = file_size;
     uint64_t read_bytes;
     InfoData data;
 
     fseek(fd, 0, SEEK_SET);
 
-    while(file_sz) {
+    while(file_sz)
+    {
 
         read_bytes = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
 
-        if(read_bytes != sizeof(InfoData)) {
+        int t = sizeof(InfoData);
+        if(!read_bytes)
+        {
             cout << "Can't read InfoData structure !!!\n";
             exit(1);
         }
 
-        fseek(fd, data.size_of_file + sizeof(InfoData), SEEK_CUR);
+        fseek(fd, data.size_of_file /*+ sizeof(InfoData)*/, SEEK_CUR);
 
-        file_size -= data.size_of_file + sizeof(InfoData);
+        file_sz -= data.size_of_file + sizeof(InfoData);
 
         all_ids.push_back(data.id);
+
+        cout << " ----------- " <<file_sz << " \n";
     }
     set_next_free_id();
 }
 
-void FileServer::set_next_free_id() {
+void FileServer::set_next_free_id()
+{
+    if(!all_ids.size())
+    {
+        next_free_id = 0;
+        return;
+    }
 
     uint64_t max_id = all_ids[0];
 
-    for(auto& iter : all_ids) {
-        if(max_id < iter) {
+    for(auto& iter : all_ids)
+    {
+        if(max_id < iter)
+        {
             max_id = iter;
         }
     }
