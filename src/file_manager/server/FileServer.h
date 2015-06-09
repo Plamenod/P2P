@@ -11,7 +11,7 @@
 #include <cstdint>
 
 struct InfoData{
-    uint64_t size_of_file;
+    uint64_t sizeOfFile;
     uint64_t id;
 };
 
@@ -22,7 +22,7 @@ public:
 
     virtual bool receive();
     // to get current max id and set next free id
-    std::vector<uint64_t> get_all_ids();
+    std::vector<uint64_t> getAllIds();
     void run();
     void stop();
 
@@ -30,41 +30,44 @@ protected:
     bool doesFileExist();
     int getPort();
     void setPort(int new_port);
-    void recover_server();
-    void set_next_free_id();
-    uint64_t seek_2_file(uint64_t id);
+    void recoverServer();
+    void set_nextFreeId();
+    uint64_t seek2File(uint64_t id);
 
 private:
 
-    void send_info_file_to_client(int);
-    void send_file_to_client(int);
+    void sendInfoFileToClient(int);
+    void sendFileToClient(int);
     /*append current buffer*/
-    int append_to_file(int);
+    int appendToFile(int);
     /*append only size of file and unique id*/
-    uint64_t initial_append(int);
-    uint64_t event_type(int);
+    uint64_t initialAppend(int);
+    uint64_t eventType(int);
 
     void open_file(const char* moode);
     void close_file();
 
     std::unique_ptr<char[]> buffer;
-    Socket socket;
+   // Socket socket;
     FILE* fd;
     InfoData info;
 
-    int listen(int);
-    bool recieve_size_of_file(int);
-    uint64_t get_id_by_client(int);
+    int listen(int, Socket&);
+    bool recieveSizeOfFile(int);
+    uint64_t getIdByClient(int);
 
     bool isBind;
 
     int port;
-    int  connection_fd;
-    uint64_t next_free_id;
+    int  connection;
+    uint64_t nextFreeId;
     std::vector<uint64_t> all_ids;
 
-    uint64_t file_size;
+    uint64_t fileSize;
     bool isRun;
+
+    void openFile();
+    void closeFile();
 };
 
 #endif /* SRC_FILE_MANAGER_SERVER_FILESERVER_H_ */
