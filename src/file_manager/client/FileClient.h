@@ -43,7 +43,7 @@ private:
     */
     uint64_t getFileID(const Socket& host_socket);
 
-    Socket host_socket;
+    //Socket host_socket;
     bool connected;
 
 };

@@ -5,8 +5,16 @@
 #include <stdint.h>
 #include <sstream>
 
-#define MAX_SIZE 100
+#define MAX_SIZE 120
 #define BYTE_TO_RECEIVE 100
+
+void encryptDecrypt(char* toEncrypt, size_t length) {
+	char key[5] = { 'R', 'H', 'X', 'T', 'R' }; //Any chars and length will work
+
+	for (int i = 0; i < length; i++){
+		toEncrypt[i] = toEncrypt[i] ^ key[i % (sizeof(key) / sizeof(char))];
+	}
+}
 
 FileClient::FileClient() : connected(false) {
 
@@ -23,7 +31,7 @@ uint64_t FileClient::send(
     uint64_t to)
 {
     uint64_t data_length = to - from;
-
+	Socket host_socket;
 
     if (data_length <= 0) {
         std::cerr << "Length is <= 0" << std::endl;
@@ -33,10 +41,10 @@ uint64_t FileClient::send(
     std::string ip = getHost(host);
     unsigned short host_port = getPort(host);
 
-    if (!connected) {
+    //if (!connected) {
         host_socket.connectTo(ip, host_port);
         connected = true;
-    }
+    //}
 
     uint64_t send_file_event = 0;
     if (!sendNumber(host_socket, send_file_event)) {
@@ -77,6 +85,8 @@ uint64_t FileClient::send(
             return 0;
         }
 
+		encryptDecrypt(buffer.get(), byte_read);
+
         int bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
 
         if (bytes_sent == -1) {
@@ -97,9 +107,11 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
     std::string ip = getHost(host);
     unsigned short port = getPort(host);
 
-    if (!connected) {
+	Socket host_socket;
+
+    //if (!connected) {
         host_socket.connectTo(ip, port);
-    }
+    //}
 
     uint64_t request_file_event = 1;
     if (!sendNumber(host_socket, request_file_event)) {
@@ -118,7 +130,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
         return nullptr;
     }
 
-    std::cout << "File size: " << file_size << std::endl;
+    //std::cout << "File size: " << file_size << std::endl;
 
     std::unique_ptr<char[]> file_content(new char[file_size]);
 
@@ -138,12 +150,12 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
             file_size,
             0);
 
-        //printf("byte read: %d \n Message: %s\n", byte_read, file_content.get());
+		encryptDecrypt(file_content.get(), byte_read);
+        //printf("byte read: %d \n Message: %s\nfile size: %lu\n", byte_read, file_content.get(), file_size);
 
         file_size -= byte_read;
         offset += byte_read;
     }
-    //printf("byte read: %d \n Message: %s\n", offset, file_content.get());
 
     return std::move(file_content);
 }
