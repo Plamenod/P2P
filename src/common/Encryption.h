@@ -16,6 +16,8 @@ public:
 
 	static std::unique_ptr<char[]> generateRandomKey(size_t keyLength);
 
+	char* getKey() const;
+
 private:
 	std::unique_ptr<char[]> key;
 };
