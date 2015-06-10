@@ -3,7 +3,7 @@
 #include <time.h>
 #include <iostream>
 
-Encryption::Encryption(size_t keyLength) : key(generateRandomKey(5)) {
+Encryption::Encryption(size_t keyLength) : key(generateRandomKey(keyLength)) {
 }
 
 Encryption::~Encryption() {
@@ -12,7 +12,7 @@ Encryption::~Encryption() {
 
 void Encryption::encryptDecrypt(char* message, size_t length) {
 	for (int i = 0; i < length; i++){
-		message[i] = message[i] ^ key.get()[i % (strlen(key.get()) / sizeof(char))];
+		message[i] ^= key.get()[i % (strlen(key.get()) / sizeof(char))];
 	}
 }
 
