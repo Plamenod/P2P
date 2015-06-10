@@ -77,7 +77,11 @@ bool FileServer::receive()
         sendFileToClient(connection);
     }
 
-    close(socket);
+#ifdef C_WIN_SOCK
+	closesocket(socket);
+#else
+	close(socket);
+#endif
     return true/*TODO*/;
 }
 
