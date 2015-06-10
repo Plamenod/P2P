@@ -10,14 +10,6 @@
 #define BYTE_TO_RECEIVE 100
 #define KEY_LENGTH 5
 
-void encryptDecrypt(char* toEncrypt, size_t length) {
-	char key[5] = { 'R', 'H', 'X', 'T', 'R' }; //Any chars and length will work
-
-	for (int i = 0; i < length; i++){
-		toEncrypt[i] = toEncrypt[i] ^ key[i % (sizeof(key) / sizeof(char))];
-	}
-}
-
 FileClient::FileClient() : connected(false), cryptor(KEY_LENGTH) {
 
 }
