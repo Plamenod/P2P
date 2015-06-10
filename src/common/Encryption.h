@@ -7,6 +7,7 @@
 class Encryption {
 public:
 	Encryption(size_t keyLength);
+	Encryption(std::string key);
 	~Encryption();
 
 	/** Encrypt the message

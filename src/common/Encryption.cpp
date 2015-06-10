@@ -6,6 +6,10 @@
 Encryption::Encryption(size_t keyLength) : key(generateRandomKey(keyLength)) {
 }
 
+Encryption::Encryption(std::string key) : key(new char[key.length() + 1]){
+	memcpy(this->key.get(), key.c_str(), key.length() + 1);
+}
+
 Encryption::~Encryption() {
 
 }
@@ -26,7 +30,7 @@ std::unique_ptr<char[]> Encryption::generateRandomKey(size_t keyLength) {
 	srand(time(NULL));
 
 	for (size_t i = 0; i < keyLength; ++i) {
-		newKey.get()[i] = rand() % 255;				//range -127 - 127
+		newKey.get()[i] = rand() % 255;
 	}
 	newKey[keyLength] = '\0';
 

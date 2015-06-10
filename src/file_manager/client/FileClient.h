@@ -7,6 +7,12 @@
 #include <cstdint>
 #include <memory>
 #include "Encryption.h"
+#define KEY_LENGTH 5
+
+struct EncryptionKey{
+	uint64_t id;
+	char key[KEY_LENGTH];
+};
 
 class FileClient {
 public:
@@ -44,9 +50,16 @@ private:
     */
     uint64_t getFileID(const Socket& host_socket);
 
+    /**
+     * @return key that maps to id on success, empty string on failure
+     */
+    std::string getKeyFromId(uint64_t id);
+
+    void writeKeyToFile(uint64_t id, char* key);
+
     //Socket host_socket;
     bool connected;
-    Encryption cryptor;
+//    Encryption cryptor;
 
 };
 
