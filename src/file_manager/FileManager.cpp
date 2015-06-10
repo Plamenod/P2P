@@ -13,7 +13,7 @@ uint64_t FileManager::send(
 }
 
 std::vector<uint64_t> FileManager::getMyIds() {
-    return server.get_all_ids();
+    return server.getAllIds();
 }
 
 std::unique_ptr<char[]> FileManager::getFile(const std::string & host, uint64_t id) {
