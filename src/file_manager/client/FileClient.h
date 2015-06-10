@@ -7,11 +7,11 @@
 #include <cstdint>
 #include <memory>
 #include "Encryption.h"
-#define KEY_LENGTH 5
+#define MAX_KEY_LENGTH 20
 
 struct EncryptionKey{
 	uint64_t id;
-	char key[KEY_LENGTH];
+	char key[MAX_KEY_LENGTH];
 };
 
 class FileClient {
