@@ -4,9 +4,11 @@
 #include <cstring>
 #include <stdint.h>
 #include <sstream>
+//#include "Encryption.h"
 
 #define MAX_SIZE 120
 #define BYTE_TO_RECEIVE 100
+#define KEY_LENGTH 5
 
 void encryptDecrypt(char* toEncrypt, size_t length) {
 	char key[5] = { 'R', 'H', 'X', 'T', 'R' }; //Any chars and length will work
@@ -16,7 +18,7 @@ void encryptDecrypt(char* toEncrypt, size_t length) {
 	}
 }
 
-FileClient::FileClient() : connected(false) {
+FileClient::FileClient() : connected(false), cryptor(KEY_LENGTH) {
 
 }
 
@@ -75,6 +77,8 @@ uint64_t FileClient::send(
 
     std::unique_ptr<char[]> buffer(new char[MAX_SIZE + 1]);
 
+//    Encryption cryptor(KEY_LENGTH);
+
     while (data_length) {
         int byte_read = fread(buffer.get(), sizeof(char), MAX_SIZE, file_to_send);
         data_length -= byte_read;
@@ -85,7 +89,9 @@ uint64_t FileClient::send(
             return 0;
         }
 
-		encryptDecrypt(buffer.get(), byte_read);
+		cryptor.encryptDecrypt(buffer.get(), byte_read);
+
+		std::cout << buffer.get() << std::endl;
 
         int bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
 
@@ -133,14 +139,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
     //std::cout << "File size: " << file_size << std::endl;
 
     std::unique_ptr<char[]> file_content(new char[file_size]);
-
-    //TODO: remove
-    //uint64_t x;
-    //::recv(host_socket, reinterpret_cast<char*>(&x), sizeof(x), 0);
-    //std::cout << x << std::endl;
-    //::recv(host_socket, reinterpret_cast<char*>(&x), sizeof(x), 0);
-    //std::cout << x << std::endl;
-    //file_size -= 8 * 2;
+//    Encryption cryptor(KEY_LENGTH);
 
     int offset = 0;
     while (file_size > 0) {
@@ -150,7 +149,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
             file_size,
             0);
 
-		encryptDecrypt(file_content.get(), byte_read);
+		cryptor.encryptDecrypt(file_content.get(), byte_read);
         //printf("byte read: %d \n Message: %s\nfile size: %lu\n", byte_read, file_content.get(), file_size);
 
         file_size -= byte_read;

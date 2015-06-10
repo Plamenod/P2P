@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include "Encryption.h"
 
 class FileClient {
 public:
@@ -45,6 +46,7 @@ private:
 
     //Socket host_socket;
     bool connected;
+    Encryption cryptor;
 
 };
 

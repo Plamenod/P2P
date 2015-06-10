@@ -26,7 +26,7 @@ std::unique_ptr<char[]> Encryption::generateRandomKey(size_t keyLength) {
 	srand(time(NULL));
 
 	for (size_t i = 0; i < keyLength; ++i) {
-		newKey.get()[i] = rand() % 255 - 127;				//range -127 - 127
+		newKey.get()[i] = rand() % 255;				//range -127 - 127
 	}
 	newKey[keyLength] = '\0';
 
