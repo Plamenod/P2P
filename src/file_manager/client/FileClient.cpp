@@ -4,6 +4,7 @@
 #include <cstring>
 #include <stdint.h>
 #include <sstream>
+#include <algorithm>
 //#include "Encryption.h"
 
 #define MAX_SIZE 120
@@ -72,7 +73,7 @@ uint64_t FileClient::send(
     Encryption cryptor(KEY_LENGTH);
 
     while (data_length) {
-        int byte_read = fread(buffer.get(), sizeof(char), MAX_SIZE, file_to_send);
+        int byte_read = fread(buffer.get(), sizeof(char), std::min<int>(MAX_SIZE, data_length), file_to_send);
         data_length -= byte_read;
 
         if (ferror(file_to_send)) {
@@ -95,7 +96,7 @@ uint64_t FileClient::send(
     uint64_t fileID = getFileID(host_socket);
 
     writeKeyToFile(fileID, cryptor.getKey());
-	
+
     fclose(file_to_send);
     return fileID;
 }
