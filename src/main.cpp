@@ -30,7 +30,7 @@ int main() {
         std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, settings.server_port, settings.file_mgr_port)));
 
     app.run();
-    const std::string fileName("D:/test.txt");
+    const std::string fileName("D:/sample.avi"), exportName("D:/RET.avi");
 
     if (!app.addFileToStorage(fileName)) {
         std::cerr << "Failed to add file to storage";
@@ -40,6 +40,11 @@ int main() {
     auto r = app.isFileInStorage(fileName);
     if (r != App::FileAvailability::High) {
         std::cerr << "File should be in in High availability";
+        return 0;
+    }
+
+    if (!app.exportFileFromStorage(fileName, exportName)) {
+        std::cerr << "Failed to export file from storage";
         return 0;
     }
 

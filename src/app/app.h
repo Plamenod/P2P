@@ -46,6 +46,7 @@ public:
     // file managment
 
     bool addFileToStorage(const std::string &);
+    bool exportFileFromStorage(const std::string & storageFile, const std::string & outputFilePath);
     FileAvailability isFileInStorage(const std::string &);
 
 

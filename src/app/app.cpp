@@ -118,10 +118,10 @@ bool App::addFileToStorage(const std::string & filePath) {
 
     std::vector<FileInfo> fileChunks = chunkifyFile(filePath);
 
-    auto & hostIter = peers.begin();
+    auto & peerIter = peers.begin();
 
     // circular iterator over std::vector
-    auto next = [](decltype(hostIter) & iter, decltype(peers) & container) {
+    auto next = [](decltype(peerIter) & iter, decltype(peers) & container) {
         if (iter == container.end()) {
             iter = container.begin();
         } else {
@@ -132,16 +132,16 @@ bool App::addFileToStorage(const std::string & filePath) {
     for (auto & chunk : fileChunks) {
 
         for (int c = 0; c < static_cast<int>(FileAvailability::High); ++c) {
-            uint64_t sentChunkId = fileManager->send(*hostIter, filePath, chunk.start, chunk.start + chunk.size);
+            uint64_t sentChunkId = fileManager->send(*peerIter, filePath, chunk.start, chunk.start + chunk.size);
 
             if (sentChunkId == 0) {
                 break;
             } else {
-                chunk.hosts.push_back(make_pair(*hostIter, sentChunkId));
+                chunk.hosts.push_back(make_pair(*peerIter, sentChunkId));
             }
         }
 
-        next(hostIter, peers);
+        next(peerIter, peers);
     }
 
     storage[filePath] = fileChunks;
@@ -174,4 +174,36 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
     }
 
     return fileStatus;
+}
+
+bool App::exportFileFromStorage(const std::string & storageFile, const std::string & outputFilePath) {
+    auto file = storage.find(storageFile);
+    if (file == storage.end()) {
+        return false;
+    }
+
+    ofstream outputFile(outputFilePath, ios::trunc | ios::binary);
+    if (!outputFile) {
+        return false;
+    }
+
+    for (const auto & chunk : file->second) {
+        bool gotChunk = false;
+        for (const auto & chunkLocation : chunk.hosts) {
+            auto data = fileManager->getFile(chunkLocation.first, chunkLocation.second);
+            if (data) {
+                gotChunk = true;
+                if (!outputFile.write(data.get(), chunk.size)) {
+                    return false;
+                }
+                break; // all good chink written to file
+            }
+
+        }
+        if (!gotChunk) {
+            return false;
+        }
+    }
+
+    return true;
 }
