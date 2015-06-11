@@ -109,7 +109,7 @@ namespace {
 }
 
 
-bool App::addFileToStorage(const std::string & filePath) {
+bool App::importFile(const std::string & filePath) {
     if (storage.find(filePath) != storage.end()) {
         return false;
     }
@@ -176,7 +176,7 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
     return fileStatus;
 }
 
-bool App::exportFileFromStorage(const std::string & storageFile, const std::string & outputFilePath) {
+bool App::exportFile(const std::string & storageFile, const std::string & outputFilePath) {
     auto file = storage.find(storageFile);
     if (file == storage.end()) {
         return false;

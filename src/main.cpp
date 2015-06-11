@@ -32,7 +32,7 @@ int main() {
     app.run();
     const std::string fileName("D:/sample.avi"), exportName("D:/RET.avi");
 
-    if (!app.addFileToStorage(fileName)) {
+    if (!app.importFile(fileName)) {
         std::cerr << "Failed to add file to storage";
         return 0;
     }
@@ -43,7 +43,7 @@ int main() {
         return 0;
     }
 
-    if (!app.exportFileFromStorage(fileName, exportName)) {
+    if (!app.exportFile(fileName, exportName)) {
         std::cerr << "Failed to export file from storage";
         return 0;
     }
