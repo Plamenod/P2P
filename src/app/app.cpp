@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <fstream>
 
+using namespace std;
+
 App::App(
     Settings settings,
     std::unique_ptr<FileManagerInterface> fileManager,
@@ -57,9 +59,33 @@ App::host_id_map App::getPeersIds() {
 
 
 namespace {
+    vector<string> split(const string & str, const string & delimiter) {
+        std::remove_const<decltype(string::npos)>::type start = 0, end = 0;
+        vector<string> output;
+        while ((end = str.find(delimiter, start)) != string::npos) {
+            output.push_back(str.substr(start, end - start));
+            start = end + 1;
+        }
+        output.push_back(str.substr(start));
+        return output;
+    }
+
+    vector<string> fixPeers(const vector<PeerInfo> & inputPeers) {
+        vector<string> fixedPeers;
+        for (const auto & peer : inputPeers) {
+            const auto parts = split(peer.address, "/");
+            fixedPeers.push_back(parts[0] + ":" + parts.back());
+        }
+        return fixedPeers;
+    }
+
+
     //TODO: make cleaner impl, maybe move to fileManager?
     std::vector<App::FileInfo> chunkifyFile(const std::string & filePath) {
         std::ifstream file(filePath, std::ios::in | std::ios::binary);
+        if (!file) {
+            return {};
+        }
         file.seekg(0, std::ios::end);
         uint64_t size = file.tellg();
         file.close();
@@ -88,34 +114,34 @@ bool App::addFileToStorage(const std::string & filePath) {
         return false;
     }
 
-    const auto & peers = networkManager->get_peers();
+    const auto & peers = fixPeers(networkManager->get_peers());
 
     std::vector<FileInfo> fileChunks = chunkifyFile(filePath);
 
-    int chunksPerHost =
-        ((fileChunks.size() * static_cast<int>(FileAvailability::High)) / peers.size()) + 1;
+    auto & hostIter = peers.begin();
 
-    auto chunkIt = fileChunks.begin(), chunkEnd = fileChunks.end();
-    for (const auto & host : peers) {
-        for (int c = 0; c < chunksPerHost && chunkIt != chunkEnd; ++c, ++chunkIt) {
+    // circular iterator over std::vector
+    auto next = [](decltype(hostIter) & iter, decltype(peers) & container) {
+        if (iter == container.end()) {
+            iter = container.begin();
+        } else {
+            ++iter;
+        }
+    };
 
-            uint64_t sentChunkId = fileManager->send(
-                host.address, filePath, chunkIt->start, chunkIt->start + chunkIt->size);
+    for (auto & chunk : fileChunks) {
+
+        for (int c = 0; c < static_cast<int>(FileAvailability::High); ++c) {
+            uint64_t sentChunkId = fileManager->send(*hostIter, filePath, chunk.start, chunk.start + chunk.size);
 
             if (sentChunkId == 0) {
-                break; // next host
+                break;
             } else {
-                chunkIt->hosts.insert(make_pair(host.address, sentChunkId));
+                chunk.hosts.push_back(make_pair(*hostIter, sentChunkId));
             }
         }
-        if (chunkIt == chunkEnd) {
-            break;
-        }
-    }
 
-    if (chunkIt != chunkEnd) {
-        // maybe go trough hosts and remove sent chunks
-        return false;
+        next(hostIter, peers);
     }
 
     storage[filePath] = fileChunks;
@@ -131,13 +157,16 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
     const auto & peers = networkManager->get_peers();
     FileAvailability fileStatus = FileAvailability::High;
 
-    // Go trough all of the chunks and check which of them has fewest connected hosts
+    // Go trough all of the chunks and check which of them has least connected hosts
     for (auto & chunk : file->second) {
         int currentChunk = 0;
         for (auto & host : chunk.hosts) {
             currentChunk +=
                 std::any_of(peers.begin(), peers.end(), [&host](const PeerInfo & info) {
-                    return info.address == host.first && info.connected;
+                    const auto & parts = split(info.address, "/");
+                    const auto & peerAddress = parts[0] + ":" + parts.back();
+
+                    return peerAddress == host.first && info.connected;
                 });
         }
         fileStatus = static_cast<FileAvailability>(

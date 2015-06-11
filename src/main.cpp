@@ -1,5 +1,5 @@
-#include <iostream>
 #include <memory>
+#include <iostream>
 
 
 #include "file_manager/FileManager.h"
@@ -9,6 +9,8 @@
 using namespace std;
 
 int main() {
+
+
     App::Settings settings;
     settings.app_port = 1001;
     settings.file_mgr_port = 1002;
@@ -16,17 +18,32 @@ int main() {
 
     settings.main_server = "127.0.0.1";
     settings.ms_port = 5005;
-    
+
+    auto f = std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, 2020, 2021));
+    f->start("127.0.0.1");
+    auto q = std::unique_ptr<FileManagerInterface>(new FileManager(2021));
+    std::thread t(&FileManagerInterface::run, &*q);
+
     App app(
         settings,
-        std::unique_ptr<FileManagerInterface>(new FileManager(settings.file_mgr_port)), 
+        std::unique_ptr<FileManagerInterface>(new FileManager(settings.file_mgr_port)),
         std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, settings.server_port, settings.file_mgr_port)));
 
     app.run();
+    const std::string fileName("D:/test.txt");
 
-    while (1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    if (!app.addFileToStorage(fileName)) {
+        std::cerr << "Failed to add file to storage";
+        return 0;
     }
-    
+
+    auto r = app.isFileInStorage(fileName);
+    if (r != App::FileAvailability::High) {
+        std::cerr << "File should be in in High availability";
+        return 0;
+    }
+
+    std::cout << "\n\nAll good exiting";
+    std::cin.get();
     return 0;
 }
