@@ -122,10 +122,8 @@ bool App::importFile(const std::string & filePath) {
 
     // circular iterator over std::vector
     auto next = [](decltype(peerIter) & iter, decltype(peers) & container) {
-        if (iter == container.end()) {
+        if (++iter == container.end()) {
             iter = container.begin();
-        } else {
-            ++iter;
         }
     };
 
