@@ -9,7 +9,7 @@ project(P2P)
 file(GLOB HEADERS "*.h" "app/*.h")
 file(GLOB SOURCES "*.cpp" "app/*.cpp")
 
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -pthread ${CMAKE_CXX_FLAGS}")
 
 include_directories(common)
 
