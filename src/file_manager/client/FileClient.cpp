@@ -7,7 +7,7 @@
 #include <algorithm>
 //#include "Encryption.h"
 
-#define MAX_SIZE 120
+#define MAX_SIZE 4000
 #define BYTE_TO_RECEIVE 100
 #define KEY_LENGTH 5
 
@@ -84,7 +84,10 @@ uint64_t FileClient::send(
 
 		cryptor.encryptDecrypt(buffer.get(), byte_read);
 
-        int bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
+		int bytes_sent = -1;
+		while (bytes_sent == -1) {
+			bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
+		}
 
         if (bytes_sent == -1) {
             std::cerr << "Failed to write to socket" << std::endl;
@@ -140,12 +143,15 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
     int offset = 0;
     while (file_size > 0) {
-        int byte_read = ::recv(
-            host_socket.getFd(),
-            reinterpret_cast<char*>(file_content.get() + offset),
-            file_size,
-            0);
 
+		int byte_read = -1;
+		while (byte_read == -1) {
+			byte_read = ::recv(
+				host_socket.getFd(),
+				reinterpret_cast<char*>(file_content.get() + offset),
+				file_size,
+				0);
+		}
 		cryptor.encryptDecrypt(file_content.get() + offset, byte_read);
         //printf("byte read: %d \n Message: %s\nfile size: %lu\n", byte_read, file_content.get(), file_size);
 
@@ -171,13 +177,17 @@ bool FileClient::sendNumber(const Socket& host_socket, uint64_t number) {
 }
 
 uint64_t FileClient::getFileID(const Socket& host_socket) {
-    uint64_t file_id;
-    int file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
+	uint64_t file_id = 0;
+    //int file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
+	int file_read = -1;
+	while (file_read == -1) {
+		file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
+	}
 
-    if (file_read != sizeof(uint64_t)) {
-        std::cerr << "Failed to read from socket" << std::endl;
-        return 0;
-    }
+    //if (file_read != sizeof(uint64_t)) {
+    //    std::cerr << "Failed to read from socket" << std::endl;
+    //    return 0;
+    //}
 
     return file_id;
 }

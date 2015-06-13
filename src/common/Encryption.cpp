@@ -3,10 +3,10 @@
 #include <time.h>
 #include <iostream>
 
-Encryption::Encryption(size_t keyLength) : key(generateRandomKey(keyLength)) {
+Encryption::Encryption(size_t keyLength) : key(generateRandomKey(keyLength)), current_file_index(0) {
 }
 
-Encryption::Encryption(std::string key) : key(new char[key.length() + 1]){
+Encryption::Encryption(std::string key) : key(new char[key.length() + 1]), current_file_index(0) {
 	memcpy(this->key.get(), key.c_str(), key.length() + 1);
 }
 
@@ -16,7 +16,7 @@ Encryption::~Encryption() {
 
 void Encryption::encryptDecrypt(char* message, size_t length) {
 	for (int i = 0; i < length; i++){
-		message[i] ^= key.get()[i % (strlen(key.get()) / sizeof(char))];
+		message[i] ^= key.get()[current_file_index++ % (strlen(key.get()) / sizeof(char))];
 	}
 }
 
