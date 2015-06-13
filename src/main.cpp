@@ -12,9 +12,9 @@ int main() {
 
 
     App::Settings settings;
-    settings.app_port = 1001;
-    settings.file_mgr_port = 1002;
-    settings.server_port = 1003;
+    settings.app_port = 3001;
+    settings.file_mgr_port = 3002;
+    settings.server_port = 3003;
 
     settings.main_server = "127.0.0.1";
     settings.ms_port = 5005;
