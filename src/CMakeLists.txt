@@ -16,6 +16,8 @@ include_directories(common)
 add_executable(P2P ${HEADERS} ${SOURCES})
 target_link_libraries(P2P FileManager P2PManager Common)
 
+SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lpthread" )
+
 if(WIN32)
 	target_link_libraries(P2P wsock32 ws2_32)
 endif()
