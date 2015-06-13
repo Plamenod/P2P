@@ -1,6 +1,6 @@
 #include <memory>
 #include <iostream>
-
+#include <sstream>
 
 #include "file_manager/FileManager.h"
 #include "p2p_network/p2p_manager/p2pnode.h"
@@ -8,8 +8,12 @@
 
 using namespace std;
 
-int main() {
+int main(int argc, char * argv[]) {
 
+    if (argc != 6) {
+        std::cerr << "App port, File mgr port, Server port, Main server ip, Main server port\n";
+        return 1;
+    }
 
     App::Settings settings;
     settings.app_port = 3001;
@@ -19,10 +23,13 @@ int main() {
     settings.main_server = "127.0.0.1";
     settings.ms_port = 5005;
 
-    auto f = std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, 2020, 2021));
-    f->start("127.0.0.1");
-    auto q = std::unique_ptr<FileManagerInterface>(new FileManager(2021));
-    std::thread t(&FileManagerInterface::run, &*q);
+    std::stringstream strm;
+    for (int c = 1; c < argc; ++c) {
+        strm << argv[c] << ' ';
+    }
+
+    strm >> settings.app_port >> settings.file_mgr_port >> settings.server_port
+         >> settings.main_server >> settings.ms_port;
 
     App app(
         settings,
@@ -30,23 +37,39 @@ int main() {
         std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, settings.server_port, settings.file_mgr_port)));
 
     app.run();
-    const std::string fileName("D:/sample.avi"), exportName("D:/RET.avi");
 
-    if (!app.importFile(fileName)) {
-        std::cerr << "Failed to add file to storage";
-        return 0;
+    while (1) {
+        std::string fileName, exportName;
+
+        cout << "Enter file path to import:\n";
+        std::getline(cin, fileName);
+        cout << "Enter file path to export:\n";
+        std::getline(cin, exportName);
+
+        if (!app.importFile(fileName)) {
+            std::cerr << "Failed to add file to storage";
+            return 0;
+        } else {
+            std::cout << "Imported!\n";
+        }
+
+        auto r = app.isFileInStorage(fileName);
+        if (r != App::FileAvailability::High) {
+            std::cerr << "File should be in in High availability";
+            return 0;
+        } else {
+            std::cout << "Available!\n";
+        }
+
+        if (!app.exportFile(fileName, exportName)) {
+            std::cerr << "Failed to export file from storage";
+            return 0;
+        } else {
+            std::cout << "Exported!\n";
+        }
+        
     }
 
-    auto r = app.isFileInStorage(fileName);
-    if (r != App::FileAvailability::High) {
-        std::cerr << "File should be in in High availability";
-        return 0;
-    }
-
-    if (!app.exportFile(fileName, exportName)) {
-        std::cerr << "Failed to export file from storage";
-        return 0;
-    }
 
     std::cout << "\n\nAll good exiting";
     std::cin.get();

@@ -89,12 +89,17 @@ bool FileServer::receive()
 
 bool FileServer::recieveSizeOfFile(int connection)
 {
-
-    uint64_t receivedBytes = ::recv(
-        connection,
-        reinterpret_cast<char *>(&info.sizeOfFile),
-        sizeof(uint64_t),
-        0);
+    uint64_t receivedBytes;
+    while(1)
+    {
+        cout << "line: 95 - recieveSizeOfFile\n";
+        receivedBytes = ::recv(
+            connection,
+            reinterpret_cast<char *>(&info.sizeOfFile),
+            sizeof(uint64_t),
+            0);
+            if(receivedBytes != -1) break;
+    }
 
     if(receivedBytes)
     {
@@ -128,6 +133,7 @@ int FileServer::appendToFile(int connection)
 
 		if (readBytes == -1)
 		{
+		    cout << "line 136\n";
 			continue;
 		}
 
@@ -137,8 +143,14 @@ int FileServer::appendToFile(int connection)
     }
 
     fileSize += info.sizeOfFile;
-
-    ::send(connection, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0); // TODO
+    while(1)
+    {
+        if(-1 != ::send(connection, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0))
+        {
+            break;
+        }
+        cout << "Send line: 152\n";
+    }
 
     if (readBytes < 0)
     {
@@ -149,20 +161,29 @@ int FileServer::appendToFile(int connection)
 
 void FileServer::sendInfoFileToClient(int newfd)
 {
-    // TODO
-    ::send(
-        newfd,
-        reinterpret_cast<const char *>(&info.sizeOfFile),
-        sizeof(uint64_t),
-        0);
+    while(1)
+    {
+        if( -1 != ::send(
+                        newfd,
+                        reinterpret_cast<const char *>(&info.sizeOfFile),
+                        sizeof(uint64_t),
+                        0) )
+        {
+            break;
+        }
+        cout << "Send line: 174\n";
+    }
 }
 
 uint64_t FileServer::getIdByClient(int connection)
 {
     uint64_t id;
 
-	//TODO: check if receive is successful
-    ::recv(connection, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0);
+	while(-1 == ::recv(connection, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0))
+    {
+        cout << "Send line: 184\n";
+    }
+
 
     return id;
 }
@@ -179,14 +200,17 @@ void FileServer::sendFileToClient(int newfd)
         cout << "ERROR: you are trying to get file with wrong id!!!\n";
     }
 
-    ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0);
+    while(-1 == ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0))
+    {
+        cout << "Send line: 205\n";
+    }
 
-    uint64_t readBytes;
+
 
     while(bytesToTransfer > 0)
     {
 
-        readBytes = fread(buffer.get(), sizeof(char), SIZE_BUFFER, this->fd);
+        uint64_t readBytes = fread(buffer.get(), sizeof(char), SIZE_BUFFER, this->fd);
 
         if ( ferror(fd) )
         {
@@ -197,6 +221,8 @@ void FileServer::sendFileToClient(int newfd)
         {
             break;
         }
+
+        else if(-1 == readBytes) continue;
 
         bytesToTransfer -= readBytes;
         while(readBytes > 0)
@@ -244,7 +270,10 @@ uint64_t FileServer::eventType(int connection)
 {
     uint64_t type;
 
-    ::recv( connection, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0);
+    while(-1 == ::recv( connection, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0))
+    {
+        cout << "Send line: 275\n";
+    }
 
     return type;
 }
