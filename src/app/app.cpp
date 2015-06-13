@@ -73,6 +73,9 @@ namespace {
     vector<string> fixPeers(const vector<PeerInfo> & inputPeers) {
         vector<string> fixedPeers;
         for (const auto & peer : inputPeers) {
+            if (!peer.connected) {
+                continue;
+            }
             const auto parts = split(peer.address, "/");
             fixedPeers.push_back(parts[0] + ":" + parts.back());
         }
