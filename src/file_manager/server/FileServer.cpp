@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <cstring>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
@@ -122,6 +124,11 @@ int FileServer::appendToFile(int connection)
     {
         readBytes = ::recv(connection, buffer.get(), SIZE_BUFFER, 0);
 
+		if (readBytes == -1) 
+		{
+			continue;
+		}
+
         fwrite(buffer.get(), sizeof(char), readBytes, fd);
 
         sizeOfFile -= readBytes;
@@ -151,6 +158,7 @@ uint64_t FileServer::getIdByClient(int connection)
 {
     uint64_t id;
 
+	//TODO: check if receive is successful
     ::recv(connection, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0);
 
     return id;
@@ -258,7 +266,7 @@ void FileServer::run()
     while(isRun)
     {
         receive();
-        sleep(1);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

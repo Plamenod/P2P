@@ -7,7 +7,7 @@
 #include <algorithm>
 //#include "Encryption.h"
 
-#define MAX_SIZE 120
+#define MAX_SIZE 4000
 #define BYTE_TO_RECEIVE 100
 #define KEY_LENGTH 5
 
