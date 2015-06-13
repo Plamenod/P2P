@@ -65,9 +65,6 @@ private:
 
     uint64_t fileSize;
     bool isRun;
-
-    void openFile();
-    void closeFile();
 };
 
 #endif /* SRC_FILE_MANAGER_SERVER_FILESERVER_H_ */

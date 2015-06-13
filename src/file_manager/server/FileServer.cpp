@@ -49,9 +49,6 @@ FileServer::~FileServer()
 
 int FileServer::listen() // TODO change the name
 {
-   // socket.makeNonblocking();
-   // socket.bindTo(hostPort);
-    //::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
     return accept(socket, nullptr, nullptr);
 }
 
@@ -128,8 +125,6 @@ int FileServer::appendToFile(int connection)
         fwrite(buffer.get(), sizeof(char), readBytes, fd);
 
         sizeOfFile -= readBytes;
-        cout << sizeOfFile << endl;
-
     }
 
     fileSize += info.sizeOfFile;
@@ -173,12 +168,14 @@ void FileServer::sendFileToClient(int newfd)
         cout << "ERROR: you are trying to get file with wrong id!!!\n";
     }
 
-    ::send(newfd, reinterpret_cast<const char*> (&bytesToTransfer), sizeof(uint64_t), 0);
+    ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0);
+
+    uint64_t readBytes;
 
     while(bytesToTransfer > 0)
     {
 
-        int k = fread(buffer.get(), sizeof(char), 55, this->fd);
+        readBytes = fread(buffer.get(), sizeof(char), SIZE_BUFFER, this->fd);
 
         if ( ferror(fd) )
         {
@@ -190,19 +187,17 @@ void FileServer::sendFileToClient(int newfd)
             break;
         }
 
-        bytesToTransfer -= k;
+        bytesToTransfer -= readBytes;
 
-        int s = ::send(newfd, buffer.get(), k, 0);
-
-        if(k != s)
+        if(readBytes != ::send(newfd, buffer.get(), readBytes, 0))
         {
-            cout << "Wrong k and s \n";
+            cerr << "Wrong readBytes and sendBytes \n";
         }
 
-        if(bytesToTransfer > 0 && bytesToTransfer < 55)
+        if(bytesToTransfer > 0 && bytesToTransfer < SIZE_BUFFER)
         {
-            fread(buffer.get(), sizeof(char), bytesToTransfer, this->fd);
-            s =  ::send(newfd, buffer.get(), bytesToTransfer, 0);
+            fread(buffer.get(), sizeof(char), bytesToTransfer, fd);
+            ::send(newfd, buffer.get(), bytesToTransfer, 0);
             break;
         }
     }
@@ -211,22 +206,22 @@ void FileServer::sendFileToClient(int newfd)
 uint64_t FileServer::seek2File(uint64_t id)
 {
     InfoData data;
-    uint64_t sz = fileSize;
+    uint64_t currentSize = fileSize;
 
     fseek(fd, 0, SEEK_SET);
 
-    while(sz > 0)
+    while(currentSize > 0)
     {
-        int b = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
+        fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
 
         if(id == data.id)
         {
             return data.sizeOfFile;
         }
 
-        fseek(fd, data.sizeOfFile /*+ sizeof(InfoData)*/, SEEK_CUR);
+        fseek(fd, data.sizeOfFile, SEEK_CUR);
 
-        sz -= data.sizeOfFile + sizeof(InfoData);
+        currentSize -= data.sizeOfFile + sizeof(InfoData);
     }
 
     return 0;
@@ -295,7 +290,7 @@ void FileServer::recoverServer()
             exit(1);
         }
 
-        fseek(fd, data.sizeOfFile /*+ sizeof(InfoData)*/, SEEK_CUR);
+        fseek(fd, data.sizeOfFile, SEEK_CUR);
 
         file_sz -= data.sizeOfFile + sizeof(InfoData);
 
@@ -326,15 +321,5 @@ void FileServer::setNextFreeId()
 void FileServer::stop()
 {
     isRun = false;
-}
-
-void FileServer::openFile()
-{
-
-}
-
-void FileServer::closeFile()
-{
-
 }
 
