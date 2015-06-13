@@ -19,7 +19,7 @@ public:
         uint16_t file_mgr_port = FILE_MANAGER_PORT
         ) :
         client(main_server_port, server_port, file_mgr_port), server(server_port) {}
-    virtual ~P2PNode(){}
+    virtual ~P2PNode();
     virtual std::vector<PeerInfo> get_peers() const;
 
     virtual void start(const std::string& server_ip);
