@@ -39,7 +39,9 @@ FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFE
     /////////
 
     socket.makeNonblocking();
+    cout << "line 40\n";
     socket.bindTo(port);
+    cout << "line 42\n";
     ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 }
 
@@ -124,7 +126,7 @@ int FileServer::appendToFile(int connection)
     {
         readBytes = ::recv(connection, buffer.get(), SIZE_BUFFER, 0);
 
-		if (readBytes == -1) 
+		if (readBytes == -1)
 		{
 			continue;
 		}
@@ -136,7 +138,7 @@ int FileServer::appendToFile(int connection)
 
     fileSize += info.sizeOfFile;
 
-    ::send(connection, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0);
+    ::send(connection, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0); // TODO
 
     if (readBytes < 0)
     {
@@ -147,6 +149,7 @@ int FileServer::appendToFile(int connection)
 
 void FileServer::sendInfoFileToClient(int newfd)
 {
+    // TODO
     ::send(
         newfd,
         reinterpret_cast<const char *>(&info.sizeOfFile),
@@ -196,13 +199,15 @@ void FileServer::sendFileToClient(int newfd)
         }
 
         bytesToTransfer -= readBytes;
-
-        if(readBytes != ::send(newfd, buffer.get(), readBytes, 0))
+        while(readBytes > 0)
         {
-            cerr << "Wrong readBytes and sendBytes \n";
+            int sentBytes = ::send(newfd, buffer.get(), readBytes, 0);
+            if(sentBytes == -1) continue;
+
+            readBytes -= sentBytes;
         }
 
-        if(bytesToTransfer > 0 && bytesToTransfer < SIZE_BUFFER)
+        if(bytesToTransfer > 0 && bytesToTransfer < SIZE_BUFFER) // TODO
         {
             fread(buffer.get(), sizeof(char), bytesToTransfer, fd);
             ::send(newfd, buffer.get(), bytesToTransfer, 0);
