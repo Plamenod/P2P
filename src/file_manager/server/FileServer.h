@@ -31,7 +31,7 @@ protected:
     int getPort();
     void setPort(int new_port);
     void recoverServer();
-    void set_nextFreeId();
+    void setNextFreeId();
     uint64_t seek2File(uint64_t id);
 
 private:
@@ -48,11 +48,11 @@ private:
     void close_file();
 
     std::unique_ptr<char[]> buffer;
-   // Socket socket;
+    Socket socket;
     FILE* fd;
     InfoData info;
 
-    int listen(int, Socket&);
+    int listen();
     bool recieveSizeOfFile(int);
     uint64_t getIdByClient(int);
 

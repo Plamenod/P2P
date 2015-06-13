@@ -34,6 +34,11 @@ FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFE
     fileSize = ftell(fd);
     memset(buffer.get(), 0, SIZE_BUFFER);
     recoverServer();
+    /////////
+
+    socket.makeNonblocking();
+    socket.bindTo(port);
+    ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 }
 
 FileServer::~FileServer()
@@ -42,28 +47,22 @@ FileServer::~FileServer()
 }
 
 
-int FileServer::listen(int hostPort, Socket& socket)
+int FileServer::listen() // TODO change the name
 {
-  //  socket.makeNonblocking();
-    socket.bindTo(hostPort);
-    ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
-
+   // socket.makeNonblocking();
+   // socket.bindTo(hostPort);
+    //::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
     return accept(socket, nullptr, nullptr);
 }
 
 
 bool FileServer::receive()
 {
-    Socket socket;
-    connection = listen(port, socket);
-    cout << "listening\n" << connection;
-
+    connection = listen();
 
     if (connection < 0)
     {
-        cerr << "ERROR on accept\n";
-        return false;
-        exit(1);  // TODO remove it
+        return false; // TODO not bool
     }
 
     if(eventType(connection) != 1)
@@ -77,11 +76,13 @@ bool FileServer::receive()
         sendFileToClient(connection);
     }
 
+
 #ifdef C_WIN_SOCK
-	closesocket(socket);
+	closesocket(connection);
 #else
-	close(socket);
+	close(connection);
 #endif
+
     return true/*TODO*/;
 }
 
@@ -173,7 +174,6 @@ void FileServer::sendFileToClient(int newfd)
     }
 
     ::send(newfd, reinterpret_cast<const char*> (&bytesToTransfer), sizeof(uint64_t), 0);
-    printf(" will send %d bytes!!!\n", static_cast<int>(bytesToTransfer));
 
     while(bytesToTransfer > 0)
     {
@@ -182,12 +182,11 @@ void FileServer::sendFileToClient(int newfd)
 
         if ( ferror(fd) )
         {
-            cout << "ERROR";
+            cerr << "ERROR";
         }
 
         else if ( feof(fd) )
         {
-            cout << "EOF" << endl;
             break;
         }
 
@@ -204,10 +203,8 @@ void FileServer::sendFileToClient(int newfd)
         {
             fread(buffer.get(), sizeof(char), bytesToTransfer, this->fd);
             s =  ::send(newfd, buffer.get(), bytesToTransfer, 0);
-            cout << k << ' ' << s << ' ' << bytesToTransfer << endl;
             break;
         }
-        cout << k << ' ' << s << ' ' << bytesToTransfer << endl;
     }
 }
 
@@ -266,8 +263,8 @@ void FileServer::run()
     while(isRun)
     {
         receive();
+        sleep(1);
     }
-
 }
 
 int FileServer::getPort()
@@ -292,8 +289,6 @@ void FileServer::recoverServer()
     {
 
         readBytes = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
-
-        int t = sizeof(InfoData);
         if(!readBytes)
         {
             cout << "Can't read InfoData structure !!!\n";
@@ -305,17 +300,15 @@ void FileServer::recoverServer()
         file_sz -= data.sizeOfFile + sizeof(InfoData);
 
         all_ids.push_back(data.id);
-
-        cout << " ----------- " <<file_sz << " \n";
     }
-    set_nextFreeId();
+    setNextFreeId();
 }
 
-void FileServer::set_nextFreeId()
+void FileServer::setNextFreeId()
 {
     if(!all_ids.size())
     {
-        nextFreeId = 0;
+        nextFreeId = 1;
         return;
     }
 
