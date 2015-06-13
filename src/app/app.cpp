@@ -118,7 +118,7 @@ bool App::importFile(const std::string & filePath) {
 
     std::vector<FileInfo> fileChunks = chunkifyFile(filePath);
 
-    auto & peerIter = peers.begin();
+    auto peerIter = peers.begin();
 
     // circular iterator over std::vector
     auto next = [](decltype(peerIter) & iter, decltype(peers) & container) {
