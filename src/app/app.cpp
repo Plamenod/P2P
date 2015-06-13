@@ -114,11 +114,11 @@ bool App::importFile(const std::string & filePath) {
         return false;
     }
 
-    const auto & peers = fixPeers(networkManager->get_peers());
+    auto peers = fixPeers(networkManager->get_peers());
 
     std::vector<FileInfo> fileChunks = chunkifyFile(filePath);
 
-    auto peerIter = peers.begin();
+	auto peerIter = peers.cbegin();
 
     // circular iterator over std::vector
     auto next = [](decltype(peerIter) & iter, decltype(peers) & container) {

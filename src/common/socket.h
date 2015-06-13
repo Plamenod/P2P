@@ -25,6 +25,7 @@ class Socket{
 public:
 
     Socket(int fdesc = INVALID_SOCKFD);
+    Socket(Socket&& other); //move constructor
 
     Socket(const Socket& other) = delete;
     Socket& operator =(const Socket& other) = delete;

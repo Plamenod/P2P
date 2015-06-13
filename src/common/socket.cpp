@@ -35,6 +35,13 @@ Socket::Socket(int fdesc) : fd(fdesc)
 }
 
 
+Socket::Socket(Socket&& other)
+{
+    this->fd = other.fd;
+    other.fd = INVALID_SOCKFD;
+}
+
+
 Socket::~Socket()
 {
 #ifdef C_WIN_SOCK

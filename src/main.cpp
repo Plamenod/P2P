@@ -30,7 +30,8 @@ int main() {
         std::unique_ptr<P2PNetworkInterface>(new P2PNode(settings.ms_port, settings.server_port, settings.file_mgr_port)));
 
     app.run();
-    const std::string fileName("D:/sample.avi"), exportName("D:/RET.avi");
+    const std::string fileName("/home/darina/Desktop/file"),
+					  exportName("/home/darina/Desktop/file_received");
 
     if (!app.importFile(fileName)) {
         std::cerr << "Failed to add file to storage";
