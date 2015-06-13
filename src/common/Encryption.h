@@ -32,6 +32,7 @@ public:
 
 private:
 	std::unique_ptr<char[]> key;
+	int current_file_index;
 };
 
 #endif
