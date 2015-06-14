@@ -116,6 +116,10 @@ bool App::importFile(const std::string & filePath) {
 
     auto peers = fixPeers(networkManager->get_peers());
 
+	if (!peers.size()) {
+		return false;
+	}
+
     std::vector<FileInfo> fileChunks = chunkifyFile(filePath);
 
 	auto peerIter = peers.cbegin();
@@ -153,6 +157,11 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
     }
 
     const auto & peers = networkManager->get_peers();
+
+	if (!peers.size()){
+		return FileAvailability::None;
+	}
+
     FileAvailability fileStatus = FileAvailability::High;
 
     // Go trough all of the chunks and check which of them has least connected hosts
