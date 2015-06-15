@@ -8,7 +8,7 @@
 class Encryption {
 public:
 	/**
-	* @brief construct with random generated key
+	* @brief construct with length of generated key
 	* @param keyLength length of random generated key
 	*/
 	Encryption(size_t keyLength);
@@ -33,6 +33,7 @@ public:
 private:
 	std::unique_ptr<char[]> key;
 	int current_file_index;
+	int key_length;
 };
 
 #endif
