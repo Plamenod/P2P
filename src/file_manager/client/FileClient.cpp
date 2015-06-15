@@ -151,6 +151,11 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 				reinterpret_cast<char*>(file_content.get() + offset),
 				file_size,
 				0);
+
+            if (byte_read == 0) {
+                std::cerr << "Remote socket closed during receiveing of file" << std::endl;
+                return nullptr;
+            }
 		}
 		cryptor.encryptDecrypt(file_content.get() + offset, byte_read);
         //printf("byte read: %d \n Message: %s\nfile size: %lu\n", byte_read, file_content.get(), file_size);
