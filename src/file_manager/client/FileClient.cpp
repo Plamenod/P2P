@@ -133,7 +133,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
     std::unique_ptr<char[]> file_content(new char[file_size]);
 
-    std::string key = getKeyFromId(id);
+    auto key = getKeyFromId(id);
 
     if(key.empty()) {
     	std::cerr << "Failed to get key to encrypt" << std::endl;
@@ -197,7 +197,7 @@ uint64_t FileClient::getFileID(const Socket& host_socket) {
     return file_id;
 }
 
-std::string FileClient::getKeyFromId(uint64_t id) {
+std::vector<char> FileClient::getKeyFromId(uint64_t id) {
 	FILE* file = fopen("key_map.bin", "rb");
 	EncryptionKey resultKey;
 
@@ -206,19 +206,20 @@ std::string FileClient::getKeyFromId(uint64_t id) {
 
 		if(id == resultKey.id) {
 			fclose(file);
-			return std::string(resultKey.key);
+            std::vector<char> key(MAX_KEY_LENGTH);
+            memcpy(key.data(), resultKey.key, MAX_KEY_LENGTH);
+            return key;
 		}
 	}
 
 	fclose(file);
-	return std::string("");
+	return std::vector<char>();
 }
 
-void FileClient::writeKeyToFile(uint64_t id, char* key) {
+void FileClient::writeKeyToFile(uint64_t id, const std::vector<char> & key) {
 	EncryptionKey newKey;
 	newKey.id = id;
-	memcpy(newKey.key, key, strlen(key));
-	newKey.key[strlen(key)] = '\0';
+	memcpy(newKey.key, key.data(), key.size());
 
 	FILE* file = fopen("key_map.bin", "ab+");
 

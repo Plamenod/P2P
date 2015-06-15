@@ -68,8 +68,9 @@ bool FileServer::receive()
 
     if(eventType(connection) != 1)
     {
-        initialAppend(connection);
-        appendToFile(connection);
+        if (initialAppend(connection)) {
+            appendToFile(connection);
+        }
     }
 
     else
@@ -116,7 +117,15 @@ uint64_t FileServer::initialAppend(int connection)
     uint64_t writtenBytes = 0;
     if (recieveSizeOfFile(connection))
     {
+        fclose(fd);
+
+        fd = freopen("test.txt", "ab+", fd);
+        if (!fd) {
+            return 0;
+        }
+
         writtenBytes = fwrite(&info, sizeof(InfoData), 1, fd);
+
     }
 
     return writtenBytes;
@@ -198,6 +207,7 @@ void FileServer::sendFileToClient(int newfd)
     if(bytesToTransfer == 0)
     {
         cout << "ERROR: you are trying to get file with wrong id!!!\n";
+        return;
     }
 
     while(-1 == ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0))
@@ -247,18 +257,24 @@ uint64_t FileServer::seek2File(uint64_t id)
     InfoData data;
     uint64_t currentSize = fileSize;
 
+    fclose(fd);
+    fd = fopen("test.txt", "ab+");
     fseek(fd, 0, SEEK_SET);
 
     while(currentSize > 0)
     {
-        fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
+        auto read = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
+        if (read != 1) {
+            perror("Failed to read InfoData");
+            return 0;
+        }
 
         if(id == data.id)
         {
             return data.sizeOfFile;
         }
 
-        fseek(fd, data.sizeOfFile, SEEK_CUR);
+        auto seek = fseek(fd, data.sizeOfFile, SEEK_CUR);
 
         currentSize -= data.sizeOfFile + sizeof(InfoData);
     }

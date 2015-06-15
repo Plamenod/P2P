@@ -4,6 +4,7 @@
 #include <memory>
 #include <cstring>
 #include <string>
+#include <vector>
 
 class Encryption {
 public:
@@ -16,24 +17,23 @@ public:
 	/**
 	* @brief construct with specified key
 	*/
-	Encryption(std::string key);
+	Encryption(const std::vector<char> & key);
 	~Encryption();
 
-	/** 
+	/**
 	* @brief Encrypt or decrypt the message in-place
 	* @param message the message to encrypt or decrypt
 	* @param length length of the message
 	*/
 	void encryptDecrypt(char* message, size_t length);
 
-	static std::unique_ptr<char[]> generateRandomKey(size_t keyLength);
+	static std::vector<char> generateRandomKey(size_t keyLength);
 
-	char* getKey() const;
+    const std::vector<char> & getKey() const;
 
 private:
-	std::unique_ptr<char[]> key;
+    std::vector<char> key;
 	int current_file_index;
-	int key_length;
 };
 
 #endif

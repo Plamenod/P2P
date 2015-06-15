@@ -53,9 +53,9 @@ private:
     /**
      * @return key that maps to id on success, empty string on failure
      */
-    std::string getKeyFromId(uint64_t id);
+    std::vector<char> getKeyFromId(uint64_t id);
 
-    void writeKeyToFile(uint64_t id, char* key);
+    void writeKeyToFile(uint64_t id, const std::vector<char> & key);
 
     //Socket host_socket;
     bool connected;
