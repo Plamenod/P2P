@@ -39,9 +39,9 @@ FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFE
     /////////
 
     socket.makeNonblocking();
-    cout << "line 40\n";
+    //cout << "line 40\n";
     socket.bindTo(port);
-    cout << "line 42\n";
+    //cout << "line 42\n";
     ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
 }
 
@@ -92,7 +92,7 @@ bool FileServer::recieveSizeOfFile(int connection)
     uint64_t receivedBytes;
     while(1)
     {
-        cout << "line: 95 - recieveSizeOfFile\n";
+        //cout << "line: 95 - recieveSizeOfFile\n";
         receivedBytes = ::recv(
             connection,
             reinterpret_cast<char *>(&info.sizeOfFile),
@@ -133,7 +133,7 @@ int FileServer::appendToFile(int connection)
 
 		if (readBytes == -1)
 		{
-		    cout << "line 136\n";
+		    //cout << "line 136\n";
 			continue;
 		}
 
@@ -149,7 +149,7 @@ int FileServer::appendToFile(int connection)
         {
             break;
         }
-        cout << "Send line: 152\n";
+        //cout << "Send line: 152\n";
     }
 
     if (readBytes < 0)
@@ -171,7 +171,7 @@ void FileServer::sendInfoFileToClient(int newfd)
         {
             break;
         }
-        cout << "Send line: 174\n";
+        //cout << "Send line: 174\n";
     }
 }
 
@@ -181,7 +181,7 @@ uint64_t FileServer::getIdByClient(int connection)
 
 	while(-1 == ::recv(connection, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0))
     {
-        cout << "Send line: 184\n";
+        //cout << "Send line: 184\n";
     }
 
 
@@ -202,7 +202,7 @@ void FileServer::sendFileToClient(int newfd)
 
     while(-1 == ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0))
     {
-        cout << "Send line: 205\n";
+        //cout << "Send line: 205\n";
     }
 
 
@@ -272,7 +272,7 @@ uint64_t FileServer::eventType(int connection)
 
     while(-1 == ::recv( connection, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0))
     {
-        cout << "Send line: 275\n";
+        //cout << "Send line: 275\n";
     }
 
     return type;
