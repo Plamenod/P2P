@@ -139,9 +139,9 @@ void P2PMainServer::checkPeers(std::vector<ServerInfo>& connected_peers, int out
         sockaddr_in addr = clients[i].addr;
         addr.sin_port = htons(clients[i].server_port);
         /**connect to returns -1 on failure*/
-        if(sock.connectTo(&addr) != -1) {
-            continue;
-        }
+        //if(sock.connectTo(&addr) != -1) {
+        //    continue;
+        //}
 
         temp.ip_addr = addr.sin_addr.s_addr;
         temp.server_port = clients[i].server_port;
