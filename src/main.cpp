@@ -16,12 +16,6 @@ int main(int argc, char * argv[]) {
     }
 
     App::Settings settings;
-    settings.app_port = 3001;
-    settings.file_mgr_port = 3002;
-    settings.server_port = 3003;
-
-    settings.main_server = "127.0.0.1";
-    settings.ms_port = 5005;
 
     std::stringstream strm;
     for (int c = 1; c < argc; ++c) {
@@ -47,27 +41,28 @@ int main(int argc, char * argv[]) {
         std::getline(cin, exportName);
 
         if (!app.importFile(fileName)) {
-            std::cerr << "Failed to add file to storage";
-            return 0;
+            std::cerr << "Failed to add file to storage\n";
+            continue;
         } else {
             std::cout << "Imported!\n";
         }
 
         auto r = app.isFileInStorage(fileName);
-        if (r != App::FileAvailability::High) {
-            std::cerr << "File should be in in High availability";
-            return 0;
+        if (r == App::FileAvailability::None) {
+            std::cerr << "File should be in in High availability... continuing\n";
+        } else if (r != App::FileAvailability::High) {
+            std::cerr << "File not available ! \n";
+            continue;
         } else {
             std::cout << "Available!\n";
         }
 
         if (!app.exportFile(fileName, exportName)) {
             std::cerr << "Failed to export file from storage";
-            return 0;
         } else {
             std::cout << "Exported!\n";
         }
-        
+
     }
 
 
