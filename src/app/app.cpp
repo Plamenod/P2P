@@ -160,6 +160,7 @@ bool App::importFile(const std::string & filePath) {
 }
 
 App::FileAvailability App::isFileInStorage(const std::string & filePath) {
+    cout << "Checking for file " << filePath << " in storage " << endl;
     auto file = storage.find(filePath);
 
     if (file == storage.end()) {
@@ -202,6 +203,7 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
 }
 
 bool App::exportFile(const std::string & storageFile, const std::string & outputFilePath) {
+    cout << "Exporting file " << storageFile << " to " << outputFilePath << endl;
     auto file = storage.find(storageFile);
     if (file == storage.end()) {
         cout << "File not in storage" << endl;
@@ -217,15 +219,17 @@ bool App::exportFile(const std::string & storageFile, const std::string & output
     for (const auto & chunk : file->second) {
         bool gotChunk = false;
         for (const auto & chunkLocation : chunk.hosts) {
+            cout << "Getting chunk ID: " << chunkLocation.second << " from host " << chunkLocation.first << " ... ";
             auto data = fileManager->getFile(chunkLocation.first, chunkLocation.second);
             if (data) {
+                cout << " Success!" << endl;
                 gotChunk = true;
                 if (!outputFile.write(data.get(), chunk.size)) {
                     return false;
                 }
                 break; // all good chink written to file
             } else {
-                cout << "Failed to receive chunk with ID: " << chunkLocation.second << " with host " << chunkLocation.first << endl;
+                cout << " Failed!"<< endl;
             }
 
         }
