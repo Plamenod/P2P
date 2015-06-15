@@ -3,7 +3,10 @@
 #include <chrono>
 #include <thread>
 #include <algorithm>
+#include <numeric>
+#include <string>
 #include <fstream>
+#include <iostream>
 
 using namespace std;
 
@@ -108,15 +111,18 @@ namespace {
     }
 }
 
-
 bool App::importFile(const std::string & filePath) {
+    cout << "Imporintg file " << filePath << endl;
+
     if (storage.find(filePath) != storage.end()) {
+        cout << "File already in storage" << endl;
         return false;
     }
 
     auto peers = fixPeers(networkManager->get_peers());
 
 	if (!peers.size()) {
+        cout << "No peers connected" << endl;
 		return false;
 	}
 
@@ -134,11 +140,14 @@ bool App::importFile(const std::string & filePath) {
     for (auto & chunk : fileChunks) {
 
         for (int c = 0; c < static_cast<int>(FileAvailability::High); ++c) {
+            cout << "Sending chunk to " << *peerIter << endl;
             uint64_t sentChunkId = fileManager->send(*peerIter, filePath, chunk.start, chunk.start + chunk.size);
 
             if (sentChunkId == 0) {
+                cout << "Failed to transfer chunk to host " << *peerIter << " chunk start " << chunk.start << endl;
                 break;
             } else {
+                cout << "Imorted chunk with ID " << sentChunkId << " to host " << *peerIter << endl;
                 chunk.hosts.push_back(make_pair(*peerIter, sentChunkId));
             }
         }
@@ -152,13 +161,16 @@ bool App::importFile(const std::string & filePath) {
 
 App::FileAvailability App::isFileInStorage(const std::string & filePath) {
     auto file = storage.find(filePath);
+
     if (file == storage.end()) {
+        cout << "File not in storage" << endl;
         return FileAvailability::None;
     }
 
     const auto & peers = networkManager->get_peers();
 
 	if (!peers.size()){
+        cout << "No peers connected" << endl;
 		return FileAvailability::None;
 	}
 
@@ -168,6 +180,9 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
     for (auto & chunk : file->second) {
         int currentChunk = 0;
         for (auto & host : chunk.hosts) {
+
+            cout << "Checking chunk with ID: " << host.second << " with host " << host.first << endl;
+
             currentChunk +=
                 std::any_of(peers.begin(), peers.end(), [&host](const PeerInfo & info) {
                     const auto & parts = split(info.address, "/");
@@ -175,6 +190,9 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
 
                     return peerAddress == host.first && info.connected;
                 });
+        }
+        if (!currentChunk) {
+            cout << "Chunk not found - " << chunk.start << endl;
         }
         fileStatus = static_cast<FileAvailability>(
             std::min<int>(currentChunk, static_cast<int>(fileStatus)));
@@ -186,11 +204,13 @@ App::FileAvailability App::isFileInStorage(const std::string & filePath) {
 bool App::exportFile(const std::string & storageFile, const std::string & outputFilePath) {
     auto file = storage.find(storageFile);
     if (file == storage.end()) {
+        cout << "File not in storage" << endl;
         return false;
     }
 
     ofstream outputFile(outputFilePath, ios::trunc | ios::binary);
     if (!outputFile) {
+        cout << "Failed to open export file " << outputFilePath << endl;
         return false;
     }
 
@@ -204,10 +224,13 @@ bool App::exportFile(const std::string & storageFile, const std::string & output
                     return false;
                 }
                 break; // all good chink written to file
+            } else {
+                cout << "Failed to receive chunk with ID: " << chunkLocation.second << " with host " << chunkLocation.first << endl;
             }
 
         }
         if (!gotChunk) {
+            cout << "Chunk failed to export" << endl;
             return false;
         }
     }
