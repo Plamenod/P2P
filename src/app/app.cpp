@@ -114,7 +114,7 @@ bool App::importFile(const std::string & filePath) {
 
     if (storage.find(filePath) != storage.end()) {
         cout << "File already in storage" << endl;
-        return false;
+        return true;
     }
 
     auto peers = fixPeers(networkManager->get_peers());
