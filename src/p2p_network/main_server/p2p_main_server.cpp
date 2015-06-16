@@ -1,6 +1,7 @@
 #include "p2p_main_server.h"
 #include "commondefines.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <thread>
@@ -79,9 +80,15 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
 {
     size_t clients_count = this->clients.size();
     Command cmd;
+
+	std::vector<int> disconnectedClients;
+
     for(size_t i = 0; i < clients_count; ++i) {
         size_t received_len = recv(clients[i].sock_fd, &cmd, sizeof(cmd));
-        if(received_len == sizeof(Command)){
+		if (received_len == 0) {
+			// save all indecies of disconnected clients
+			disconnectedClients.push_back(i);
+		} else if(received_len == sizeof(Command)){
             switch(cmd) {
                 case Command::GET_PEERS:
                     sendPeersInfo(i);
@@ -94,6 +101,17 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
             }
         }
     }
+
+	int clientsCounter = 0, dcCounter = 0;
+
+	// go trough the clients and remove those with saved indecies
+	clients.erase(std::remove_if(clients.begin(), clients.end(), [&](const ClientInfo &) {
+		if (clientsCounter++ == disconnectedClients[dcCounter]) {
+			++dcCounter;
+			return true;
+		}
+		return false;
+	}), clients.end());
 }
 
 void P2PMainServer::sendPeersInfo(int out_peer_index) const
