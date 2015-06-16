@@ -15,7 +15,8 @@ Encryption::~Encryption() {
 
 void Encryption::encryptDecrypt(char* message, size_t length) {
 	for (int i = 0; i < length; i++){
-		message[i] ^= key[current_file_index++ % (key.size() / sizeof(char))];
+		current_file_index = (current_file_index + 1) % key.size();
+		message[i] ^= key[current_file_index];
 	}
 }
 
