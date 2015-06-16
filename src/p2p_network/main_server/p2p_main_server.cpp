@@ -81,14 +81,28 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
     size_t clients_count = this->clients.size();
     Command cmd;
 
-	std::vector<int> disconnectedClients;
+	std::vector<int> dcClient;
 
     for(size_t i = 0; i < clients_count; ++i) {
-        size_t received_len = recv(clients[i].sock_fd, &cmd, sizeof(cmd));
+        int received_len = recv(clients[i].sock_fd, &cmd, sizeof(cmd));
 		if (received_len == 0) {
 			// save all indecies of disconnected clients
-			disconnectedClients.push_back(i);
-		} else if(received_len == sizeof(Command)){
+			dcClient.push_back(i);
+		} else if (received_len == -1) {
+			bool wouldBlock = false;
+
+#ifdef C_WIN_SOCK
+			int err = WSAGetLastError();
+			wouldBlock =  err && err == WSAEWOULDBLOCK;
+#else
+			wouldBlock = errno && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+
+			if (!wouldBlock) {
+				dcClient.push_back(i);
+			}
+
+		} else if (received_len == sizeof(Command)) {
             switch(cmd) {
                 case Command::GET_PEERS:
                     sendPeersInfo(i);
@@ -102,16 +116,13 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
         }
     }
 
-	int clientsCounter = 0, dcCounter = 0;
-
-	// go trough the clients and remove those with saved indecies
-	clients.erase(std::remove_if(clients.begin(), clients.end(), [&](const ClientInfo &) {
-		if (clientsCounter++ == disconnectedClients[dcCounter]) {
-			++dcCounter;
-			return true;
-		}
-		return false;
-	}), clients.end());
+	if (dcClient.size() > 0) {
+		int clientsCounter = 0;
+		// go trough the clients and remove those with saved indecies
+		clients.erase(std::remove_if(clients.begin(), clients.end(), [&](const ClientInfo &) {
+			return find(dcClient.begin(), dcClient.end(), clientsCounter++) != dcClient.end();
+		}), clients.end());
+	}
 }
 
 void P2PMainServer::sendPeersInfo(int out_peer_index) const
