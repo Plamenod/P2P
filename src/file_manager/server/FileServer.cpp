@@ -18,11 +18,14 @@
 
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
+const char * dbFileName = "db.dat";
+
+
 using namespace std;
 FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER]))
 {
 
-    fd = fopen("test.txt", "ab+");
+    fd = fopen(dbFileName, "ab+");
 
     if(fd == NULL)
     {
@@ -119,7 +122,7 @@ uint64_t FileServer::initialAppend(int connection)
     {
         fclose(fd);
 
-        fd = freopen("test.txt", "ab+", fd);
+        fd = freopen(dbFileName, "ab+", fd);
         if (!fd) {
             return 0;
         }
@@ -258,7 +261,7 @@ uint64_t FileServer::seek2File(uint64_t id)
     uint64_t currentSize = fileSize;
 
     fclose(fd);
-    fd = fopen("test.txt", "ab+");
+    fd = fopen(dbFileName, "ab+");
     fseek(fd, 0, SEEK_SET);
 
     while(currentSize > 0)
