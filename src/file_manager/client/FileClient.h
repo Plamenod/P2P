@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include "Encryption.h"
-#define MAX_KEY_LENGTH 20
+#define MAX_KEY_LENGTH 5
 
 struct EncryptionKey{
 	uint64_t id;

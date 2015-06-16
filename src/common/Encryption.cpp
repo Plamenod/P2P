@@ -29,7 +29,7 @@ std::vector<char> Encryption::generateRandomKey(size_t keyLength) {
 	srand(time(NULL));
 
 	for (size_t i = 0; i < keyLength; ++i) {
-		newKey[i] = rand() % 255 + 1;
+		newKey[i] = rand() % 100 + 1;
 	}
 
 	return std::move(newKey);
