@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <time.h>
 #include <iostream>
+#include <random>
 
 Encryption::Encryption(size_t keyLength) : key(generateRandomKey(keyLength)), current_file_index(0) {
 }
@@ -27,10 +28,11 @@ const std::vector<char> & Encryption::getKey() const {
 std::vector<char> Encryption::generateRandomKey(size_t keyLength) {
     std::vector<char> newKey(keyLength);
 
-	srand(time(NULL));
+	std::mt19937 randomGenerator;
+	std::uniform_int_distribution<int> distribution('a', 'z');
 
 	for (size_t i = 0; i < keyLength; ++i) {
-		newKey[i] = rand() % 100 + 1;
+		newKey[i] = distribution(randomGenerator);
 	}
 
 	return std::move(newKey);
