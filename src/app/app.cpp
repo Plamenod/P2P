@@ -28,19 +28,17 @@ void App::run() {
     running = true;
     networkManager->start(settings.main_server);
 
-    fileMgrThread = new std::thread(&FileManagerInterface::run, &*fileManager);
+    fileMgrThread = std::thread(&FileManagerInterface::run, &*fileManager);
 
-    appThread = new std::thread(&App::listener, this);
+    appThread = std::thread(&App::listener, this);
 }
 
 void App::stop() {
     running = false;
 
-    fileMgrThread->join();
-    delete fileMgrThread;
+    fileMgrThread.join();
 
-    appThread->join();
-    delete appThread;
+    appThread.join();
 
     fileManager->stop();
     networkManager->stop();

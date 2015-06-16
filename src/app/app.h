@@ -63,7 +63,7 @@ private:
     std::unique_ptr<FileManagerInterface> fileManager;
     std::unique_ptr<P2PNetworkInterface> networkManager;
 
-    std::thread * appThread, * fileMgrThread;
+    std::thread appThread, fileMgrThread;
     bool running;
     Settings settings;
     FileStorage storage;
