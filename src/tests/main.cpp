@@ -36,8 +36,6 @@ int main() {
 	}
 
 	im.clear();
-	l->stop();
-	r->stop();
 
 	return 0;
 }

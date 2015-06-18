@@ -52,7 +52,7 @@ pair<bool, string> filesEqual(const std::string & left, const std::string & righ
 }
 
 
-shared_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, string savePath) {
+unique_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, string savePath) {
 	auto fileMgr = unique_ptr<FileManagerInterface>(new FileManager(fileMgrPort, savePath));
 	auto node = unique_ptr<P2PNetworkInterface>(new P2PNode(msPort, p2pPort, fileMgrPort));
 	App::Settings st;
@@ -60,7 +60,7 @@ shared_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, string saveP
 	st.ms_port = msPort;
 	st.file_mgr_port = fileMgrPort;
 	st.server_port = p2pPort;
-	return shared_ptr<App>(new App(st, move(fileMgr), move(node)));
+	return unique_ptr<App>(new App(st, move(fileMgr), move(node)));
 }
 
 int InstanceManager::startPort = InstanceManager::msPort + 1;
@@ -69,12 +69,15 @@ int InstanceManager::startSavePath = 1;
 shared_ptr<App> InstanceManager::nextNonColidingApp() {
 	unique_lock<mutex> l(this->mx);
 	auto fname = to_string(++startSavePath) + ".dat";
-	this->onClear.push_back([fname]{
+
+	auto app = createApp(++startPort, ++startPort, msPort, fname);
+	shared_ptr<App> appPtr(app.release(), [fname](App * app) {
+		delete app;
 		remove(fname.c_str());
 	});
-	auto app = createApp(++startPort, ++startPort, msPort, fname);
-	this->apps.push_back(app);
-	return app;
+
+	this->apps.push_back(appPtr);
+	return appPtr;
 }
 
 void InstanceManager::startMs() {
@@ -87,20 +90,19 @@ void InstanceManager::startMs() {
 
 void InstanceManager::stopMs() {
 	ms->stop();
-	this->worker.join();
+	if (this->worker.joinable()) {
+		this->worker.join();
+	}
 	this->worker = thread();
 }
 
 void InstanceManager::clear() {
 	this->apps.clear();
-	for (auto cb : this->onClear) {
-		cb();
-	}
-	this->onClear.clear();
 }
 
 InstanceManager::~InstanceManager() {
 	this->clear();
+	this->stopMs();
 }
 
 InstanceManager & InstanceManager::getInstance() {

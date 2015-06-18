@@ -9,12 +9,20 @@
 #include <mutex>
 #include <utility>
 
-std::shared_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, std::string savePath);
+std::unique_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, std::string savePath);
 std::pair<bool, std::string> filesEqual(const std::string & left, const std::string & right);
+
+
 
 class InstanceManager {
 public:
-	std::shared_ptr<App> nextNonColidingApp();
+	/**
+	* @brief Shared pointers created from InstanceManager will clean all files left
+	* by the App class
+	*/
+	typedef std::shared_ptr<App> AppPtr;
+
+	AppPtr nextNonColidingApp();
 
 	void startMs();
 	void stopMs();
@@ -37,7 +45,6 @@ private:
 
 	std::mutex mx;
 	std::vector<std::shared_ptr<App>> apps;
-	std::vector<std::function<void()>> onClear;
 	std::unique_ptr<P2PMainServer> ms;
 	std::thread worker;
 	bool isRunning;
