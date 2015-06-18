@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 add_subdirectory(file_manager)
 add_subdirectory(p2p_network)
 add_subdirectory(common)
+add_subdirectory(tests)
 
 project(P2P)
 
