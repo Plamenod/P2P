@@ -9,7 +9,7 @@ class FileManager : public FileManagerInterface {
     FileClient client;
     FileServer server;
 public:
-    FileManager(uint16_t serverPort);
+    FileManager(uint16_t serverPort, std::string dbFilePath = "db.data");
 
     uint64_t send(
         const std::string & host,

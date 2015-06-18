@@ -17,7 +17,7 @@ struct InfoData{
 
 class FileServer {
 public:
-    FileServer(int port);
+    FileServer(int port, std::string dbFilePath);
     ~FileServer();
 
     virtual bool receive();
@@ -65,6 +65,8 @@ private:
 
     uint64_t fileSize;
     bool isRun;
+
+	std::string dbFilePath;
 };
 
 #endif /* SRC_FILE_MANAGER_SERVER_FILESERVER_H_ */
