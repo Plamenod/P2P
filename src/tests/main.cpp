@@ -14,7 +14,6 @@ int main() {
 
 	l->run();
 	r->run();
-
 	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 	string f1 = "D:/dev/1.pdf";
@@ -35,6 +34,10 @@ int main() {
 	if (!res.first) {
 		cerr << res.second;
 	}
+
+	im.clear();
+	l->stop();
+	r->stop();
 
 	return 0;
 }
