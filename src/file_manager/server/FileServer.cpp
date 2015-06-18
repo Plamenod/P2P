@@ -19,10 +19,10 @@
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
 using namespace std;
-FileServer::FileServer(int port, string dbFilePath) : dbFilePath(move(dbFilePath)), buffer(unique_ptr<char[]>(new char[SIZE_BUFFER]))
+FileServer::FileServer(int port, string dbFilePath): dbFilePath(move(dbFilePath)), buffer(unique_ptr<char[]>(new char[SIZE_BUFFER]))
 {
 
-    fd = fopen(dbFilePath.c_str(), "ab+");
+    fd = fopen(this->dbFilePath.c_str(), "ab+");
 
     if(fd == NULL)
     {
