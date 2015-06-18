@@ -48,6 +48,17 @@ App::~App() {
     stop();
 }
 
+App::App(App && other):
+	fileManager(move(other.fileManager)),
+	networkManager(move(other.networkManager)),
+	appThread(move(other.appThread)),
+	fileMgrThread(move(other.fileMgrThread)),
+	running(other.running),
+	settings(other.settings),
+	storage(move(other.storage))
+{
+}
+
 void App::listener() {
     // bind, listen on settings.app_port and return fileManager->myIds();
     // stop when this->running == false

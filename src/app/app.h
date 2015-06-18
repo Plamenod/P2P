@@ -38,6 +38,9 @@ public:
 
     App(const App &) = delete;
     App & operator=(const App &) = delete;
+
+	App(App && other);
+
     ~App();
 
     void run();
