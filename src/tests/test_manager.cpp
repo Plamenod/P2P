@@ -19,7 +19,7 @@ pair<bool, string> filesEqual(const std::string & left, const std::string & righ
 	if (!r) {
 		return pair<bool, string>{false, "Failed to open " + right};
 	}
-	
+
 	l.seekg(ios::end, 0);
 	r.seekg(ios::end, 0);
 
@@ -43,7 +43,7 @@ pair<bool, string> filesEqual(const std::string & left, const std::string & righ
 			return pair<bool, string>{false, "Failed to read same sizes from both files"};
 		}
 
-		if (!memcmp(buffer[0].get(), buffer[1].get(), r.gcount())) {
+		if (memcmp(buffer[0].get(), buffer[1].get(), r.gcount()) != 0) {
 			return pair<bool, string>{false, "Data missmatch in files!"};
 		}
 	}
