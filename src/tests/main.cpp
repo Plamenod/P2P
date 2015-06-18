@@ -1,41 +1,37 @@
 #include <iostream>
 
 #include "test_manager.h"
+#include "one_to_one_test.h"
 
 using namespace std;
 
 int main() {
-	auto & im = InstanceManager::getInstance();
+    vector<shared_ptr<TestCaseBase>> tests;
 
-	im.startMs();
+    string f1 = "D:/dev/1.pdf";
+    string f2 = "D:/dev/2.pdf";
+    tests.emplace_back(new OneToOneTest(f1, f2));
+	
 
-	auto l = im.nextNonColidingApp();
-	auto r = im.nextNonColidingApp();
+    vector<TestError> errors;
 
-	l->run();
-	r->run();
-	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    for (auto & test : tests) {
+        test->setUp();
+        auto error = test->run();
+        if (error.first) {
+            errors.push_back(error);
+        }
+        test->tearDown();
+    }
+	
+    cout << "\n\n------------------------------------------\n"
+        << "Tests ran: " << tests.size() << "\n"
+        << "Test passed: " << (tests.size() - errors.size()) << "\n"
+        << "Tests failed: " << errors.size() << "\n\n";
 
-	string f1 = "D:/dev/1.pdf";
-	string f2 = "D:/dev/2.pdf";
-
-	if (!l->importFile(f1)) {
-		cerr << "Failed to import file";
-		return 0;
-	}
-
-	if (!l->exportFile(f1, f2)) {
-		cerr << "Failed to export file";
-		return 0;
-	}
-
-	auto res = filesEqual(f1, f2);
-
-	if (!res.first) {
-		cerr << res.second;
-	}
-
-	im.clear();
+    for (auto & err : errors) {
+        cout << err.second << "\n";
+    }
 
 	return 0;
 }
