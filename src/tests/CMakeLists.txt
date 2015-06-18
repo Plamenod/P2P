@@ -4,12 +4,12 @@ file(GLOB HEADERS "*.h")
 file(GLOB SOURCES "*.cpp")
 
 # compile the App class with the test for now
-file(GLOB APP_HEADERS "../app/.*h")
-file(GLOB APP_SOURCES "../app/.*cpp")
+file(GLOB APP_HEADERS "../app/*.h")
+file(GLOB APP_SOURCES "../app/*.cpp")
 
 # compile main server with the test for now
-file(GLOB MS_HEADERS "../p2p_network/main_server/.*h")
-file(GLOB MS_SOURCES "../p2p_network/main_server/.*cpp")
+file(GLOB MS_HEADERS "../p2p_network/main_server/p2p_main_server.h")
+file(GLOB MS_SOURCES "../p2p_network/main_server/p2p_main_server.cpp")
 
 
 include_directories(../common/)
