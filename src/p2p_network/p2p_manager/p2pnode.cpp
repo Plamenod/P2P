@@ -36,5 +36,8 @@ void P2PNode::startServer()
 void P2PNode::stopServer()
 {
     server_flag = false;
-    server_thread.join();
+	if (server_thread.joinable()) {
+		server_thread.join();
+	}
+
 }

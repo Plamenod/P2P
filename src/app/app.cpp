@@ -36,7 +36,9 @@ void App::stop() {
 
     fileManager->stop();
 
-    fileMgrThread.join();
+	if (fileMgrThread.joinable()) {
+		fileMgrThread.join();
+	}
 
     networkManager->stop();
 }
