@@ -19,7 +19,7 @@ public:
 
     ~P2PMainServer() {};
 
-    void start();
+    void start(int port);
 
 private:
     size_t recv(int fd, void* buf, size_t buf_size, int flags = 0) const;
