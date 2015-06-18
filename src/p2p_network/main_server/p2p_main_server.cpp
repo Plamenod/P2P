@@ -28,7 +28,8 @@ void P2PMainServer::start(int port)
     memset(buffer, 0, sizeof(buffer));
 
     std::cout << "Server waiting for connections at port " << port << std::endl;
-    while(true) {
+	isRunning = true;
+    while(isRunning) {
         serveConnectedClients(buffer);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         ClientInfo current_client = this->socket.accept();
@@ -40,6 +41,10 @@ void P2PMainServer::start(int port)
         std::cout << "Accepted connection from " << client_ip_addr << std::endl;
         std::cout << "File descriptor " << current_client.sock_fd << std::endl;
     }
+}
+
+void P2PMainServer::stop() {
+	isRunning = false;
 }
 
 size_t P2PMainServer::recv(int fd, void* buf, size_t buf_size, int flags) const

@@ -12,7 +12,7 @@
 class P2PMainServer{
 
 public:
-    P2PMainServer() { clients.reserve(INITIAL_CLIENTS_COUNT); };
+    P2PMainServer(): isRunning(false) { clients.reserve(INITIAL_CLIENTS_COUNT); };
 
     P2PMainServer(const P2PMainServer& other) = delete;
     P2PMainServer& operator =(const P2PMainServer& other) = delete;
@@ -20,6 +20,7 @@ public:
     ~P2PMainServer() {};
 
     void start(int port);
+	void stop();
 
 private:
     size_t recv(int fd, void* buf, size_t buf_size, int flags = 0) const;
@@ -30,6 +31,8 @@ private:
     void sendPeersInfo(int out_peer_index) const;
     void checkPeers(std::vector<ServerInfo>& connected_peers, int out_peer_index) const;
 
+
+	bool isRunning;
     Socket socket;
     uint16_t port;
     std::vector<ClientInfo> clients;
