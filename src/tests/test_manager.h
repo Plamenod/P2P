@@ -9,8 +9,10 @@
 #include <mutex>
 #include <utility>
 
+typedef std::pair<bool, std::string> TestError;
+
 std::unique_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, std::string savePath);
-std::pair<bool, std::string> filesEqual(const std::string & left, const std::string & right);
+TestError filesEqual(const std::string & left, const std::string & right);
 
 
 
@@ -56,7 +58,7 @@ public:
 
 	virtual void setUp() {}
 	virtual void tearDown() {}
-	virtual bool run() = 0;
+	virtual TestError run() = 0;
 };
 
 

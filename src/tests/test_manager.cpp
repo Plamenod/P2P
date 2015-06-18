@@ -9,22 +9,22 @@
 
 using namespace std;
 
-pair<bool, string> filesEqual(const std::string & left, const std::string & right) {
+TestError filesEqual(const std::string & left, const std::string & right) {
 	ifstream l(left, ios::in | ios::binary);
 	if (!l) {
-		return pair < bool, string > {false, "Failed to open " + left};
+		return TestError{false, "Failed to open " + left};
 	}
 	ifstream r(right, ios::in | ios::binary);
 
 	if (!r) {
-		return pair < bool, string > {false, "Failed to open " + right};
+		return TestError{false, "Failed to open " + right};
 	}
 
 	l.seekg(ios::end, 0);
 	r.seekg(ios::end, 0);
 
 	if (l.tellg() != r.tellg()) {
-		return pair < bool, string > {false, "File sizes differ " + to_string(l.tellg()) + " " + to_string(r.tellg())};
+		return TestError{false, "File sizes differ " + to_string(l.tellg()) + " " + to_string(r.tellg())};
 	}
 
 	const int sz = 8192;
@@ -36,19 +36,19 @@ pair<bool, string> filesEqual(const std::string & left, const std::string & righ
 	while (l && r) {
 		// both files should have equal states after read
 		if (!!l.read(buffer[0].get(), sz) != !!r.read(buffer[1].get(), sz)) {
-			return pair < bool, string > {false, "Error states differ in file read"};
+			return TestError{false, "Error states differ in file read"};
 		}
 
 		if (r.gcount() != l.gcount()) {
-			return pair < bool, string > {false, "Failed to read same sizes from both files"};
+			return TestError{false, "Failed to read same sizes from both files"};
 		}
 
 		if (memcmp(buffer[0].get(), buffer[1].get(), r.gcount()) != 0) {
-			return pair < bool, string > {false, "Data missmatch in files!"};
+			return TestError{false, "Data missmatch in files!"};
 		}
 	}
 
-	return pair < bool, string > {true, ""};
+	return TestError{true, ""};
 }
 
 
