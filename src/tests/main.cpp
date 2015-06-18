@@ -11,6 +11,12 @@ int main() {
 
 	auto l = im.nextNonColidingApp();
 	auto r = im.nextNonColidingApp();
+
+	l->run();
+	r->run();
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
 	string f1 = "D:/dev/1.pdf";
 	string f2 = "D:/dev/2.pdf";
 
