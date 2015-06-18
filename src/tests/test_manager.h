@@ -26,7 +26,7 @@ public:
 	InstanceManager(const InstanceManager &) = delete;
 	InstanceManager & operator=(InstanceManager &) = delete;
 
-
+	~InstanceManager();
 private:
 	InstanceManager() {}
 
@@ -37,6 +37,7 @@ private:
 
 	std::mutex mx;
 	std::vector<std::shared_ptr<App>> apps;
+	std::vector<std::function<void()>> onClear;
 	std::unique_ptr<P2PMainServer> ms;
 	std::thread worker;
 	bool isRunning;

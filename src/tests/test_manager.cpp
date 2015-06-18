@@ -68,7 +68,11 @@ int InstanceManager::startSavePath = 1;
 
 shared_ptr<App> InstanceManager::nextNonColidingApp() {
 	unique_lock<mutex> l(this->mx);
-	auto app = createApp(++startPort, ++startPort, msPort, to_string(++startSavePath) + ".dat");
+	auto fname = to_string(++startSavePath) + ".dat";
+	this->onClear.push_back([&fname]{
+		remove(fname.c_str());
+	});
+	auto app = createApp(++startPort, ++startPort, msPort, fname);
 	this->apps.push_back(app);
 	return app;
 }
@@ -89,6 +93,14 @@ void InstanceManager::stopMs() {
 
 void InstanceManager::clear() {
 	this->apps.clear();
+	for (auto cb : this->onClear) {
+		cb();
+	}
+	this->onClear.clear();
+}
+
+InstanceManager::~InstanceManager() {
+	this->clear();
 }
 
 InstanceManager & InstanceManager::getInstance() {
