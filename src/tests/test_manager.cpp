@@ -69,7 +69,7 @@ int InstanceManager::startSavePath = 1;
 shared_ptr<App> InstanceManager::nextNonColidingApp() {
 	unique_lock<mutex> l(this->mx);
 	auto fname = to_string(++startSavePath) + ".dat";
-	this->onClear.push_back([&fname]{
+	this->onClear.push_back([fname]{
 		remove(fname.c_str());
 	});
 	auto app = createApp(++startPort, ++startPort, msPort, fname);
