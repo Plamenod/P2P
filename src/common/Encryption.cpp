@@ -4,36 +4,45 @@
 #include <iostream>
 #include <random>
 
-Encryption::Encryption(size_t keyLength) : key(generateRandomKey(keyLength)), current_file_index(0) {
-}
-
-Encryption::Encryption(const std::vector<char> & key) : key(key), current_file_index(0) {
-}
-
-Encryption::~Encryption() {
-
+Encryption::Encryption() : rotationIndex(0) {
+	std::fill(key.begin(), key.end(), 0);
 }
 
 void Encryption::encryptDecrypt(char* message, size_t length) {
 	for (int i = 0; i < length; i++){
-		current_file_index = (current_file_index + 1) % key.size();
-		message[i] ^= key[current_file_index];
+		rotationIndex = (rotationIndex + 1) % key.size();
+		message[i] ^= key[rotationIndex];
 	}
 }
 
-const std::vector<char> & Encryption::getKey() const {
-	return key;
+Encryption::KeySave Encryption::getSave(uint64_t id) const {
+	return { this->key, id };
 }
 
-std::vector<char> Encryption::generateRandomKey(size_t keyLength) {
-    std::vector<char> newKey(keyLength);
+Encryption::operator bool() const {
+	for (const auto & keyPart : key) {
+		if (keyPart != 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+Encryption Encryption::getRandomEncryption() {
+	Encryption enc;
 
 	std::mt19937 randomGenerator;
 	std::uniform_int_distribution<int> distribution('a', 'z');
 
-	for (size_t i = 0; i < keyLength; ++i) {
-		newKey[i] = distribution(randomGenerator);
+	for (auto & keyPart : enc.key) {
+		keyPart = distribution(randomGenerator);
 	}
 
-	return std::move(newKey);
+	return enc;
+}
+
+Encryption Encryption::fromSave(const Encryption::KeySave & save) {
+	Encryption enc;
+	memcpy(&enc.key[0], &save.key[0], Encryption::SIZE);
+	return enc;
 }

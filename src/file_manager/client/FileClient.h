@@ -9,11 +9,6 @@
 #include "Encryption.h"
 #define MAX_KEY_LENGTH 5
 
-struct EncryptionKey{
-	uint64_t id;
-	char key[MAX_KEY_LENGTH];
-};
-
 class FileClient {
 public:
     FileClient();
@@ -53,9 +48,9 @@ private:
     /**
      * @return key that maps to id on success, empty string on failure
      */
-    std::vector<char> getKeyFromId(uint64_t id);
+	Encryption getKeyFromId(uint64_t id);
 
-    void writeKeyToFile(uint64_t id, const std::vector<char> & key);
+    bool writeKeyToFile(const Encryption::KeySave & );
 
     //Socket host_socket;
     bool connected;
