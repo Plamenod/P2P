@@ -252,6 +252,7 @@ void FileServer::sendFileToClient(int newfd)
     }
 }
 
+
 uint64_t FileServer::seek2File(uint64_t id)
 {
     InfoData data;
@@ -261,6 +262,7 @@ uint64_t FileServer::seek2File(uint64_t id)
 	fd = fopen(dbFilePath.c_str(), "ab+");
     fseek(fd, 0, SEEK_SET);
 
+	// TODO: fix this, randomly loops forever
     while(currentSize > 0)
     {
         auto read = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
@@ -338,6 +340,7 @@ void FileServer::recoverServer()
 
     fseek(fd, 0, SEEK_SET);
 
+	// TODO: fix this, randomly loops forever
     while(file_sz)
     {
 
