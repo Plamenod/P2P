@@ -11,6 +11,13 @@ file(GLOB APP_SOURCES "../app/*.cpp")
 file(GLOB MS_HEADERS "../p2p_network/main_server/p2p_main_server.h")
 file(GLOB MS_SOURCES "../p2p_network/main_server/p2p_main_server.cpp")
 
+if (WIN32)
+    SOURCE_GROUP("Source Files\\MainServer" FILES "../p2p_network/main_server/p2p_main_server.cpp")
+    SOURCE_GROUP("Header Files\\MainServer" FILES "../p2p_network/main_server/p2p_main_server.h")
+    
+    SOURCE_GROUP("Source Files\\App" FILES ${APP_SOURCES})
+    SOURCE_GROUP("Header Files\\App" FILES ${APP_HEADERS})
+endif()
 
 include_directories(../common/)
 include_directories(../app)
