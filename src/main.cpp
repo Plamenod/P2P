@@ -10,8 +10,8 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
 
-    if (argc != 6) {
-        std::cerr << "App port, File mgr port, Server port, Main server ip, Main server port\n";
+    if (argc != 4) {
+        std::cerr << "File mgr port, Server port, Main server ip\n";
         return 1;
     }
 
@@ -22,8 +22,12 @@ int main(int argc, char * argv[]) {
         strm << argv[c] << ' ';
     }
 
-    strm >> settings.app_port >> settings.file_mgr_port >> settings.server_port
-         >> settings.main_server >> settings.ms_port;
+    strm >> settings.file_mgr_port >> settings.server_port
+         >> settings.main_server;
+
+	settings.main_server = "127.0.0.1";
+	settings.ms_port = 5005;
+	settings.app_port = -1;
 
     App app(
         settings,
