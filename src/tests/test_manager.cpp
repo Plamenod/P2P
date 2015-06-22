@@ -20,8 +20,8 @@ TestError filesEqual(const std::string & left, const std::string & right) {
         return TestError{false, "Failed to open " + right};
     }
 
-    l.seekg(ios::end, 0);
-    r.seekg(ios::end, 0);
+    l.seekg(0, ios::end);
+    r.seekg(0, ios::end);
 
     if (l.tellg() != r.tellg()) {
         return TestError{false, "File sizes differ " + to_string(l.tellg()) + " " + to_string(r.tellg())};
