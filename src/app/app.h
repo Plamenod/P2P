@@ -38,6 +38,9 @@ public:
 
     App(const App &) = delete;
     App & operator=(const App &) = delete;
+
+	App(App && other);
+
     ~App();
 
     void run();
@@ -63,7 +66,7 @@ private:
     std::unique_ptr<FileManagerInterface> fileManager;
     std::unique_ptr<P2PNetworkInterface> networkManager;
 
-    std::thread appThread, fileMgrThread;
+    std::thread fileMgrThread;
     bool running;
     Settings settings;
     FileStorage storage;

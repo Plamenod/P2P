@@ -12,14 +12,13 @@
 #include <errno.h>
 #endif
 
-#define MSPORT 5005
 #define BUFFER_SIZE 16384
 
-void P2PMainServer::start()
+void P2PMainServer::start(int port)
 {
     this->socket.makeNonblocking();
 
-    this->socket.bindTo(MSPORT);
+    this->socket.bindTo(port);
     if(!this->socket.listen()){
         std::cerr << "Unsuccessful listening request!\n";
         exit(1);
@@ -28,8 +27,9 @@ void P2PMainServer::start()
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
 
-    std::cout << "Server waiting for connections at port " << MSPORT << std::endl;
-    while(true) {
+    std::cout << "Server waiting for connections at port " << port << std::endl;
+	isRunning = true;
+    while(isRunning) {
         serveConnectedClients(buffer);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         ClientInfo current_client = this->socket.accept();
@@ -41,6 +41,10 @@ void P2PMainServer::start()
         std::cout << "Accepted connection from " << client_ip_addr << std::endl;
         std::cout << "File descriptor " << current_client.sock_fd << std::endl;
     }
+}
+
+void P2PMainServer::stop() {
+	isRunning = false;
 }
 
 size_t P2PMainServer::recv(int fd, void* buf, size_t buf_size, int flags) const

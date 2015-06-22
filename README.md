@@ -1,22 +1,20 @@
 # P2P
 
-Distributed file backup system, which allows for multiple backups of single file on rmeote hosts. Managed by a main server used only for peer discovery.
+Distributed file backup system, which allows for multiple backups of single file on remote hosts. Managed by a main server used only for peer discovery.
 
 
 ### Launching
 
 1. Start MainServer on a host without arguments ```P2PMainServer```
 2. Start P2P node on any number of hosts providing the following arguments
- - Application Port - unused can be any
  - File manager port - any port that the file manager can bind and listen on
  - P2P node port - any port that the p2p node can bind and listen only
  - Main server address - the ip of the host that P2PMainServer was started
- - Main server port - currently 5005
 
 ### Example:
 
 ```
-$ ./P2P.exe 30 31 32 10.0.201.3 5005
+$ ./P2P.exe 31 32 10.0.201.3
 Connected to 10.0.201.3 5005
 Listening and file manager ports sent !!
 5 bytes

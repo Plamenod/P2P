@@ -18,14 +18,11 @@
 
 #define MAX_LENGTH_OF_QUEUE_PANDING 5
 
-const char * dbFileName = "db.dat";
-
-
 using namespace std;
-FileServer::FileServer(int port) : buffer(unique_ptr<char[]>(new char[SIZE_BUFFER]))
+FileServer::FileServer(int port, string dbFilePath): dbFilePath(move(dbFilePath)), buffer(unique_ptr<char[]>(new char[SIZE_BUFFER]))
 {
 
-    fd = fopen(dbFileName, "ab+");
+    fd = fopen(this->dbFilePath.c_str(), "ab+");
 
     if(fd == NULL)
     {
@@ -122,7 +119,7 @@ uint64_t FileServer::initialAppend(int connection)
     {
         fclose(fd);
 
-        fd = freopen(dbFileName, "ab+", fd);
+		fd = fopen(dbFilePath.c_str(), "ab+");
         if (!fd) {
             return 0;
         }
@@ -255,15 +252,17 @@ void FileServer::sendFileToClient(int newfd)
     }
 }
 
+
 uint64_t FileServer::seek2File(uint64_t id)
 {
     InfoData data;
     uint64_t currentSize = fileSize;
 
     fclose(fd);
-    fd = fopen(dbFileName, "ab+");
+	fd = fopen(dbFilePath.c_str(), "ab+");
     fseek(fd, 0, SEEK_SET);
 
+	// TODO: fix this, randomly loops forever
     while(currentSize > 0)
     {
         auto read = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
@@ -341,6 +340,7 @@ void FileServer::recoverServer()
 
     fseek(fd, 0, SEEK_SET);
 
+	// TODO: fix this, randomly loops forever
     while(file_sz)
     {
 

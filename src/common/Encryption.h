@@ -4,36 +4,51 @@
 #include <memory>
 #include <cstring>
 #include <string>
-#include <vector>
+#include <array>
 
 class Encryption {
 public:
-	/**
-	* @brief construct with length of generated key
-	* @param keyLength length of random generated key
-	*/
-	Encryption(size_t keyLength);
+	const static int SIZE = 32;
+	typedef std::array<char, Encryption::SIZE> KeyType;
+
+	struct KeySave {
+		KeyType key;
+		uint64_t id;
+	};
 
 	/**
-	* @brief construct with specified key
+	* @brief Create 'empty' encryption object
 	*/
-	Encryption(const std::vector<char> & key);
-	~Encryption();
+	Encryption();
 
 	/**
 	* @brief Encrypt or decrypt the message in-place
 	* @param message the message to encrypt or decrypt
 	* @param length length of the message
 	*/
-	void encryptDecrypt(char* message, size_t length);
+	void encryptDecrypt(char * message, size_t length);
 
-	static std::vector<char> generateRandomKey(size_t keyLength);
+	/**
+	* @brief Generate random key and create object for it
+	*/
+	static Encryption getRandomEncryption();
 
-    const std::vector<char> & getKey() const;
+	/**
+	* @brief Get KeySave with own key and provided id;
+	*/
+	KeySave getSave(uint64_t id) const;
+
+	/**
+	* @brief Create Encyption from file save
+	*/
+	static Encryption fromSave(const KeySave & save);
+
+	operator bool() const;
 
 private:
-    std::vector<char> key;
-	int current_file_index;
+
+    KeyType key;
+	int rotationIndex;
 };
 
 #endif

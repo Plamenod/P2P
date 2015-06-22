@@ -29,23 +29,32 @@ void App::run() {
     networkManager->start(settings.main_server);
 
     fileMgrThread = std::thread(&FileManagerInterface::run, &*fileManager);
-
-    appThread = std::thread(&App::listener, this);
 }
 
 void App::stop() {
     running = false;
 
-    fileMgrThread.join();
-
-    appThread.join();
-
     fileManager->stop();
+
+	if (fileMgrThread.joinable()) {
+		fileMgrThread.join();
+	}
+
     networkManager->stop();
 }
 
 App::~App() {
     stop();
+}
+
+App::App(App && other):
+	fileManager(move(other.fileManager)),
+	networkManager(move(other.networkManager)),
+	fileMgrThread(move(other.fileMgrThread)),
+	running(other.running),
+	settings(other.settings),
+	storage(move(other.storage))
+{
 }
 
 void App::listener() {

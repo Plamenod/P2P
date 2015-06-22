@@ -1,6 +1,8 @@
 #include "FileManager.h"
 
-FileManager::FileManager(uint16_t serverPort): server(serverPort), client() {
+using namespace std;
+
+FileManager::FileManager(uint16_t serverPort, std::string dbFilePath): server(serverPort, move(dbFilePath)), client() {
 }
 
 uint64_t FileManager::send(
