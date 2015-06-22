@@ -9,6 +9,8 @@
 
 using namespace std;
 
+const int InstanceManager::msPort = 2000;
+
 TestError filesEqual(const std::string & left, const std::string & right) {
     ifstream l(left, ios::in | ios::binary);
     if (!l) {

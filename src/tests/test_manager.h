@@ -42,7 +42,7 @@ private:
 	InstanceManager() {}
 
 private:
-	static const int msPort = 2000;
+	static const int msPort;
 	static int startPort;
 	static int startSavePath;
 
