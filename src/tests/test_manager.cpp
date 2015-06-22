@@ -110,7 +110,8 @@ shared_ptr<App> InstanceManager::nextNonColidingApp() {
     auto app = createApp(++startPort, ++startPort, msPort, fname);
     shared_ptr<App> appPtr(app.release(), [fname](App * app) {
         delete app;
-        remove(fname.c_str());
+        removeFile(fname);
+        removeFile("key_map.bin");
     });
 
     this->apps.push_back(appPtr);
