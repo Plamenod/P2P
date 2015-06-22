@@ -62,7 +62,13 @@ public:
 	virtual TestError tearDown() { return TestError{true, ""}; }
 	virtual TestError run() = 0;
 
-	virtual ~TestCaseBase() {}
+	virtual ~TestCaseBase() {
+        for (auto & cb : atDtor) {
+            cb();
+        }
+    }
+protected:
+    std::vector<std::function<void()>> atDtor;
 };
 
 
