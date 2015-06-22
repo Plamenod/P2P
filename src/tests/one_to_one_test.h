@@ -5,10 +5,10 @@
 
 class OneToOneTest: public TestCaseBase {
 public:
-    OneToOneTest(std::string import, std::string export);
+    OneToOneTest();
 
-    void setUp() override;
-    void tearDown() override;
+    TestError setUp() override;
+    TestError tearDown() override;
     TestError run() override;
 
 private:

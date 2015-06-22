@@ -12,9 +12,10 @@
 typedef std::pair<bool, std::string> TestError;
 
 std::unique_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, std::string savePath);
+
 TestError filesEqual(const std::string & left, const std::string & right);
-
-
+TestError generateFile(const std::string & path, uint64_t size, const std::string & data = "abcdefghijklmnopqrstuvwxyz");
+TestError removeFile(const std::string & path);
 
 class InstanceManager {
 public:
@@ -56,9 +57,12 @@ private:
 class TestCaseBase {
 public:
 
-	virtual void setUp() {}
-	virtual void tearDown() {}
+	// on Error in setUp, tearDown and run should not be called
+	virtual TestError setUp() { return TestError{true, ""}; }
+	virtual TestError tearDown() { return TestError{true, ""}; }
 	virtual TestError run() = 0;
+
+	virtual ~TestCaseBase() {}
 };
 
 
