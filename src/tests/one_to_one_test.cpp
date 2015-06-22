@@ -25,6 +25,11 @@ TestError OneToOneTest::setUp() {
         return err;
     }
 
+    string toRemove = this->importPath;
+    atDtor.push_back([toRemove] {
+        removeFile(toRemove);
+    });
+
     return TestError{true, ""};
 }
 
@@ -42,10 +47,9 @@ TestError OneToOneTest::run() {
         return TestError{false, ""};
     }
 
-    auto err = removeFile(importPath);
-    if (!err.first) {
-        return err;
-    }
+    auto result = filesEqual(importPath, exportPath);
 
-    return filesEqual(importPath, exportPath);
+    removeFile(exportPath);
+
+    return result;
 }
