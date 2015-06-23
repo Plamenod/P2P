@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sstream>
 #include <algorithm>
+#include <thread>
 //#include "Encryption.h"
 
 #define MAX_SIZE 4000
@@ -57,13 +58,15 @@ uint64_t FileClient::send(
 
     if (!file_to_send) {
         std::cerr << "Failed to open file to send" << std::endl;
-        fclose(file_to_send);
         return 0;
     }
+    
+    auto file_deleter = std::shared_ptr<FILE>(file_to_send, [](FILE * f) {
+        fclose(f);
+    });
 
     if (fseek(file_to_send, from, SEEK_SET)) {
         std::cerr << "Failed to seek to position " << from << std::endl;
-        fclose(file_to_send);
         return 0;
     }
 
@@ -81,20 +84,22 @@ uint64_t FileClient::send(
 
         if (ferror(file_to_send)) {
             std::cerr << "Failed to read file content" << std::endl;
-            fclose(file_to_send);
             return 0;
         }
 
 		cryptor.encryptDecrypt(buffer.get(), byte_read);
 
-		int bytes_sent = -1;
-		while (bytes_sent == -1) {
-			bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
-		}
-
+        int bytes_sent = -1;
+        while (bytes_sent < 0) {
+            bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
+            if (bytes_sent == 0) {
+                std::cerr << "Connection to remote host closed while sending data" << std::endl;
+                return 0;
+            }
+        }
+		
         if (bytes_sent == -1) {
             std::cerr << "Failed to write to socket" << std::endl;
-            fclose(file_to_send);
             return 0;
         }
     }
@@ -106,7 +111,6 @@ uint64_t FileClient::send(
 		return 0;
 	}
 
-    fclose(file_to_send);
     return fileID;
 }
 

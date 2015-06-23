@@ -36,12 +36,12 @@ protected:
 
 private:
 
-    void sendInfoFileToClient(int);
-    void sendFileToClient(int);
+    bool sendInfoFileToClient(int);
+    bool sendFileToClient(int);
     /*append current buffer*/
-    int appendToFile(int);
+    bool appendToFile(int);
     /*append only size of file and unique id*/
-    uint64_t initialAppend(int);
+    bool initialAppend(int);
     uint64_t eventType(int);
 
     void open_file(const char* moode);
@@ -52,7 +52,7 @@ private:
     FILE* fd;
     InfoData info;
 
-    int listen();
+    int acceptClient();
     bool recieveSizeOfFile(int);
     uint64_t getIdByClient(int);
 
