@@ -2,6 +2,7 @@
 
 #include "test_manager.h"
 #include "one_to_one_test.h"
+#include "n_node_test.h"
 
 using namespace std;
 
@@ -9,10 +10,9 @@ int main() {
 
     vector<shared_ptr<TestCaseBase>> tests;
 
-    string f1 = "D:/dev/1.pdf";
-    string f2 = "D:/dev/2.pdf";
     tests.emplace_back(new OneToOneTest());
-
+    tests.emplace_back(new NNodeTest(5));
+    tests.emplace_back(new NNodeTest(5, (1 << 20) * 10));
 
     vector<TestError> errors;
 
