@@ -132,9 +132,9 @@ string InstanceManager::getNewTmpFilename() const
 void InstanceManager::startMs() {
     if (!ms) {
         ms = unique_ptr<P2PMainServer>(new P2PMainServer());
+        this->worker = thread(&P2PMainServer::start, &*ms, msPort);
+        this_thread::sleep_for(chrono::milliseconds(500));
     }
-    this->worker = thread(&P2PMainServer::start, &*ms, msPort);
-    this_thread::sleep_for(chrono::milliseconds(500));
 }
 
 void InstanceManager::stopMs() {
@@ -143,6 +143,7 @@ void InstanceManager::stopMs() {
         this->worker.join();
     }
     this->worker = thread();
+    ms.reset(nullptr);
 }
 
 void InstanceManager::clear() {

@@ -27,7 +27,7 @@ public:
 
 	AppPtr getNewAppInstance();
 
-    string getNewTmpFilename() const;
+    std::string getNewTmpFilename() const;
 
 	void startMs();
 	void stopMs();
