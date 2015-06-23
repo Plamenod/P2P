@@ -107,7 +107,7 @@ int InstanceManager::startSavePath = 1;
 
 shared_ptr<App> InstanceManager::getNewAppInstance() {
     unique_lock<mutex> l(this->mx);
-    auto fname = to_string(++startSavePath) + ".dat";
+    auto fname = getNewTmpFilename();
 
     auto app = createApp(++startPort, ++startPort, msPort, fname);
     shared_ptr<App> appPtr(app.release(), [fname](App * app) {
@@ -118,6 +118,15 @@ shared_ptr<App> InstanceManager::getNewAppInstance() {
 
     this->apps.push_back(appPtr);
     return appPtr;
+}
+
+string InstanceManager::getNewTmpFilename() const
+{
+    string fname = "";
+    do {
+        fname = to_string(++startSavePath) + ".dat";
+    } while (fileExists(fname));
+    return fname;
 }
 
 void InstanceManager::startMs() {
@@ -143,6 +152,12 @@ void InstanceManager::clear() {
 InstanceManager::~InstanceManager() {
     this->clear();
     this->stopMs();
+}
+
+bool InstanceManager::fileExists(const std::string & fName) const
+{
+    ifstream infile(fName);
+    return infile.good();
 }
 
 InstanceManager & InstanceManager::getInstance() {

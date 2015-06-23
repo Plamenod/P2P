@@ -27,6 +27,8 @@ public:
 
 	AppPtr getNewAppInstance();
 
+    string getNewTmpFilename() const;
+
 	void startMs();
 	void stopMs();
 
@@ -39,6 +41,9 @@ public:
 
 	~InstanceManager();
 private:
+
+    bool fileExists(const std::string & fName) const;
+
 	InstanceManager() {}
 
 private:
