@@ -262,7 +262,6 @@ uint64_t FileServer::seek2File(uint64_t id)
 	fd = fopen(dbFilePath.c_str(), "ab+");
     fseek(fd, 0, SEEK_SET);
 
-	// TODO: fix this, randomly loops forever
     while(currentSize > 0)
     {
         auto read = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
@@ -271,6 +270,8 @@ uint64_t FileServer::seek2File(uint64_t id)
             return 0;
         }
 
+        currentSize -= sizeof(InfoData);
+
         if(id == data.id)
         {
             return data.sizeOfFile;
@@ -278,7 +279,12 @@ uint64_t FileServer::seek2File(uint64_t id)
 
         auto seek = fseek(fd, data.sizeOfFile, SEEK_CUR);
 
-        currentSize -= data.sizeOfFile + sizeof(InfoData);
+        if (currentSize < data.sizeOfFile) {
+            cout << "Failed to read data structure from db" << endl;
+            return 0;
+        }
+
+        currentSize -= data.sizeOfFile;
     }
 
     return 0;
@@ -340,21 +346,26 @@ void FileServer::recoverServer()
 
     fseek(fd, 0, SEEK_SET);
 
-	// TODO: fix this, randomly loops forever
     while(file_sz)
     {
 
         readBytes = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
         if(!readBytes)
         {
-            cout << "Can't read InfoData structure !!!\n";
+            cout << "Can't read InfoData structure - failed read" << endl;
             exit(1);
         }
 
+        file_sz -= sizeof(InfoData);
+
         fseek(fd, data.sizeOfFile, SEEK_CUR);
 
-        file_sz -= data.sizeOfFile + sizeof(InfoData);
+        if (file_sz < data.sizeOfFile) {
+            cout << "Can't read InfoData structure - broken file" << endl;
+            exit(1);
+        }
 
+        file_sz -= data.sizeOfFile;
         all_ids.push_back(data.id);
     }
     setNextFreeId();
