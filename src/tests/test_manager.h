@@ -25,7 +25,7 @@ public:
 	*/
 	typedef std::shared_ptr<App> AppPtr;
 
-	AppPtr nextNonColidingApp();
+	AppPtr getNewAppInstance();
 
 	void startMs();
 	void stopMs();

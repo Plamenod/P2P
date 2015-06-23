@@ -9,8 +9,8 @@ TestError OneToOneTest::setUp() {
 
     im.startMs();
 
-    left = im.nextNonColidingApp();
-    right = im.nextNonColidingApp();
+    left = im.getNewAppInstance();
+    right = im.getNewAppInstance();
 
     left->run();
     right->run();

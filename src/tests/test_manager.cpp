@@ -105,7 +105,7 @@ unique_ptr<App> createApp(int fileMgrPort, int p2pPort, int msPort, string saveP
 int InstanceManager::startPort = InstanceManager::msPort + 1;
 int InstanceManager::startSavePath = 1;
 
-shared_ptr<App> InstanceManager::nextNonColidingApp() {
+shared_ptr<App> InstanceManager::getNewAppInstance() {
     unique_lock<mutex> l(this->mx);
     auto fname = to_string(++startSavePath) + ".dat";
 
