@@ -308,6 +308,8 @@ bool FileServer::sendFileToClient(int newfd)
             break;
         }
     }
+
+    return true;
 }
 
 
