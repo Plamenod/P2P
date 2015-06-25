@@ -355,7 +355,7 @@ uint64_t FileServer::eventType(int connection)
     }
 
     if (!retries) {
-        cout << "Failed to receive event type from client";
+        cout << "Failed to receive event type from client" << endl;
         return -1;
     }
 
