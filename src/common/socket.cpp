@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "socket.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -49,16 +50,44 @@ Socket::Socket(Socket&& other)
     other.fd = INVALID_SOCKFD;
 }
 
+Socket & Socket::operator=(Socket && other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (this->fd != INVALID_SOCKFD) {
+        this->close();
+    }
+
+    this->fd = other.fd;
+    other.fd = INVALID_SOCKFD;
+
+    return *this;
+}
+
 
 Socket::~Socket()
 {
-#ifdef C_WIN_SOCK
-    closesocket(this->fd);
-#else
-    close(this->fd);
-#endif
+    this->close();
 }
 
+
+uint32_t Socket::getPeerAddress()
+{
+    if (this->fd == INVALID_SOCKFD) {
+        return 0;
+    }
+    return getSockAddr().sin_addr.s_addr;
+}
+
+std::string Socket::getPeerName()
+{
+    if (this->fd == INVALID_SOCKFD)
+        return "";
+
+    return std::string(inet_ntoa(getSockAddr().sin_addr));
+}
 
 void Socket::bindTo(unsigned short port) const
 {
@@ -75,12 +104,6 @@ void Socket::bindTo(unsigned short port) const
 
     int yes = 1;
     if (setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&yes), sizeof(int)) == -1) {
-
-#ifdef C_WIN_SOCK
-        closesocket(this->fd);
-#else
-        close(this->fd);
-#endif
         std::cerr << "Failed to setsockop SO_REUSEADDR\n";
         exit(1);
     }
@@ -128,8 +151,7 @@ void Socket::addOption(int option)
     setsockopt(this->fd, SOL_SOCKET, option, reinterpret_cast<const char*>(&opt_val), sizeof(int));
 }
 
-
-void Socket::makeNonblocking() const
+bool Socket::makeNonblocking() const
 {
 
 #ifdef C_WIN_SOCK
@@ -138,9 +160,9 @@ void Socket::makeNonblocking() const
 #else
     if(fcntl(this->fd, F_SETFL, O_NONBLOCK) == -1) {
 #endif
-        std::cerr << "Cannot make socket nonblocking!\n";
-        exit(1);
+        return false;
     }
+    return true;
 }
 
 
@@ -167,4 +189,25 @@ ClientInfo Socket::accept() const
 Socket Socket::acceptSocket() const
 {
     return Socket(::accept(this->fd, nullptr, nullptr));
+}
+
+sockaddr_in Socket::getSockAddr()
+{
+    sockaddr_in info;
+    socklen_t size = sizeof(sockaddr_in);
+    getpeername(this->fd, reinterpret_cast<sockaddr*>(&info), &size);
+    return info;
+}
+
+void Socket::close()
+{
+    if (this->fd != INVALID_SOCKFD) {
+#ifdef C_WIN_SOCK
+        closesocket(this->fd);
+#else
+        close(this->fd);
+#endif
+        this->fd = INVALID_SOCKFD;
+    }
+
 }

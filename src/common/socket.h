@@ -26,7 +26,9 @@ public:
 
     explicit Socket(int fdesc);
     Socket();
+
     Socket(Socket&& other); //move constructor
+    Socket & operator=(Socket && other); // move assign
 
     Socket(const Socket& other) = delete;
     Socket& operator =(const Socket& other) = delete;
@@ -36,6 +38,9 @@ public:
     operator int() const { return fd; };
     int getFd() const { return fd; };
 
+    uint32_t getPeerAddress();
+    std::string getPeerName();
+
     void bindTo(unsigned short port) const;
     int connectTo(const std::string& ip, uint16_t port) const;
     int connectTo(const sockaddr_in* server_addr) const;
@@ -44,11 +49,16 @@ public:
     int send(const void * buf, int len, int flags = 0);
 
     void addOption(int option = SO_REUSEADDR);
-    void makeNonblocking() const;
+    bool makeNonblocking() const;
 
     bool listen() const;
     ClientInfo accept() const;
     Socket acceptSocket() const;
+
+private:
+    sockaddr_in getSockAddr();
+    void close();
+
 
 private:
     int fd;
