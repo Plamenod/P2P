@@ -12,7 +12,7 @@
 #define BYTE_TO_RECEIVE 100
 #define KEY_LENGTH 5
 
-FileClient::FileClient() : connected(false){
+FileClient::FileClient() {
 
 }
 
@@ -37,10 +37,10 @@ uint64_t FileClient::send(
     std::string ip = getHost(host);
     unsigned short host_port = getPort(host);
 
-    //if (!connected) {
-        host_socket.connectTo(ip, host_port);
-        connected = true;
-    //}
+    if (0 != host_socket.connectTo(ip, host_port)) {
+        std::cerr << "Failed to connect to client " << host << std::endl;
+        return 0;
+    }
 
     uint64_t send_file_event = 0;
     if (!sendNumber(host_socket, send_file_event)) {
@@ -120,9 +120,10 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
 	Socket host_socket;
 
-    //if (!connected) {
-        host_socket.connectTo(ip, port);
-    //}
+    if (0 != host_socket.connectTo(ip, port);) {
+        std::cerr << "Failed to connect to client " << host << std::endl;
+        return nullptr;
+    }
 
     uint64_t request_file_event = 1;
     if (!sendNumber(host_socket, request_file_event)) {

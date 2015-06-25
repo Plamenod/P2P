@@ -51,11 +51,6 @@ private:
 	Encryption getKeyFromId(uint64_t id);
 
     bool writeKeyToFile(const Encryption::KeySave & );
-
-    //Socket host_socket;
-    bool connected;
-//    Encryption cryptor;
-
 };
 
 #endif /* FILECLIENT_H_ */
