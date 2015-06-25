@@ -112,6 +112,16 @@ int Socket::connectTo(const sockaddr_in* server_addr) const
     return connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr));
 }
 
+int Socket::recv(char * buf, int len, int flags)
+{
+    return ::recv(this->fd, buf, len, flags);
+}
+
+int Socket::send(const char * buf, int len, int flags)
+{
+    return ::send(this->fd, buf, len, flags);
+}
+
 void Socket::addOption(int option)
 {
     int opt_val;
