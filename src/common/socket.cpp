@@ -112,14 +112,14 @@ int Socket::connectTo(const sockaddr_in* server_addr) const
     return connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr));
 }
 
-int Socket::recv(char * buf, int len, int flags)
+int Socket::recv(void * buf, int len, int flags)
 {
-    return ::recv(this->fd, buf, len, flags);
+    return ::recv(this->fd, reinterpret_cast<char *>(buf), len, flags);
 }
 
-int Socket::send(const char * buf, int len, int flags)
+int Socket::send(const void * buf, int len, int flags)
 {
-    return ::send(this->fd, buf, len, flags);
+    return ::send(this->fd, reinterpret_cast<const char *>(buf), len, flags);
 }
 
 void Socket::addOption(int option)

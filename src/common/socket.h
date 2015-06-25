@@ -40,8 +40,8 @@ public:
     int connectTo(const std::string& ip, uint16_t port) const;
     int connectTo(const sockaddr_in* server_addr) const;
 
-    int recv(char * buf, int len, int flags = 0);
-    int send(const char * buf, int len, int flags = 0);
+    int recv(void * buf, int len, int flags = 0);
+    int send(const void * buf, int len, int flags = 0);
 
     void addOption(int option = SO_REUSEADDR);
     void makeNonblocking() const;
