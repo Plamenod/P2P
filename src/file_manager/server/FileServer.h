@@ -36,13 +36,13 @@ protected:
 
 private:
 
-    bool sendInfoFileToClient(int);
-    bool sendFileToClient(int);
+    bool sendInfoFileToClient(Socket &);
+    bool sendFileToClient(Socket &);
     /*append current buffer*/
-    bool appendToFile(int);
+    bool appendToFile(Socket &);
     /*append only size of file and unique id*/
-    bool initialAppend(int);
-    uint64_t eventType(int);
+    bool initialAppend(Socket &);
+    uint64_t eventType(Socket &);
 
     void open_file(const char* moode);
     void close_file();
@@ -53,8 +53,8 @@ private:
     InfoData info;
 
     Socket acceptClient();
-    bool recieveSizeOfFile(int);
-    uint64_t getIdByClient(int);
+    bool recieveSizeOfFile(Socket &);
+    uint64_t getIdByClient(Socket &);
 
     bool isBind;
 

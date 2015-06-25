@@ -42,7 +42,7 @@ FileServer::FileServer(int port, string dbFilePath): dbFilePath(move(dbFilePath)
     //cout << "line 40\n";
     socket.bindTo(port);
     //cout << "line 42\n";
-    ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
+    this->socket.listen();
 }
 
 FileServer::~FileServer()
@@ -83,18 +83,14 @@ bool FileServer::receive()
     return result;
 }
 
-bool FileServer::recieveSizeOfFile(int connection)
+bool FileServer::recieveSizeOfFile(Socket & connection)
 {
     int receivedBytes = -1;
     int retries = 100;
     while(retries && receivedBytes <= 0)
     {
         //cout << "line: 95 - recieveSizeOfFile\n";
-        receivedBytes = ::recv(
-            connection,
-            reinterpret_cast<char *>(&info.sizeOfFile),
-            sizeof(uint64_t),
-            0);
+        receivedBytes = connection.recv(&info.sizeOfFile, sizeof(uint64_t));
 
         if (receivedBytes == 0)
         {
@@ -122,7 +118,7 @@ bool FileServer::recieveSizeOfFile(int connection)
     return receivedBytes;
 }
 
-bool FileServer::initialAppend(int connection)
+bool FileServer::initialAppend(Socket & connection)
 {
 
     int writtenBytes = 0;
@@ -141,14 +137,14 @@ bool FileServer::initialAppend(int connection)
     return writtenBytes == 1;
 }
 
-bool FileServer::appendToFile(int connection)
+bool FileServer::appendToFile(Socket & connection)
 {
     int readBytes = -1;
     uint64_t sizeOfFile = info.sizeOfFile;
     int retries = 100;
     while(sizeOfFile && retries)
     {
-        readBytes = ::recv(connection, buffer.get(), SIZE_BUFFER, 0);
+        readBytes = connection.recv(buffer.get(), SIZE_BUFFER);
 
 		if (readBytes == -1)
 		{
@@ -174,7 +170,7 @@ bool FileServer::appendToFile(int connection)
     retries = 100;
     while(--retries)
     {
-        if(sizeof(uint64_t) == ::send(connection, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0))
+        if(sizeof(uint64_t) == connection.send(&info.id, sizeof(uint64_t)))
         {
             break;
         }
@@ -195,16 +191,12 @@ bool FileServer::appendToFile(int connection)
     return true;
 }
 
-bool FileServer::sendInfoFileToClient(int newfd)
+bool FileServer::sendInfoFileToClient(Socket & connection)
 {
     int retries = 100;
     while(--retries)
     {
-        if( sizeof(uint64_t) == ::send(
-                        newfd,
-                        reinterpret_cast<const char *>(&info.sizeOfFile),
-                        sizeof(uint64_t),
-                        0) )
+        if (sizeof(uint64_t) == connection.send(&info.sizeOfFile, sizeof(uint64_t)))
         {
             return true;
         }
@@ -214,12 +206,12 @@ bool FileServer::sendInfoFileToClient(int newfd)
     return false;
 }
 
-uint64_t FileServer::getIdByClient(int connection)
+uint64_t FileServer::getIdByClient(Socket & connection)
 {
     uint64_t id = 0;
 
     int retries = 100;
-	while(--retries && sizeof(uint64_t) != ::recv(connection, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0))
+	while(--retries && sizeof(uint64_t) != connection.recv(&id, sizeof(uint64_t)))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -227,10 +219,10 @@ uint64_t FileServer::getIdByClient(int connection)
     return id;
 }
 
-bool FileServer::sendFileToClient(int newfd)
+bool FileServer::sendFileToClient(Socket & connection)
 {
 
-    uint64_t id = getIdByClient(newfd);
+    uint64_t id = getIdByClient(connection);
 
     uint64_t bytesToTransfer = seek2File(id);
 
@@ -241,7 +233,7 @@ bool FileServer::sendFileToClient(int newfd)
     }
 
     int retries = 100;
-    while (--retries && sizeof(uint64_t) != ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0))
+    while (--retries && sizeof(uint64_t) != connection.send(&bytesToTransfer, sizeof(uint64_t)))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         //cout << "Send line: 205\n";
@@ -281,7 +273,7 @@ bool FileServer::sendFileToClient(int newfd)
 
         while(readBytes > 0)
         {
-            int sentBytes = ::send(newfd, buffer.get(), readBytes, 0);
+            int sentBytes = connection.send(buffer.get(), readBytes);
             if (sentBytes == -1)
             {
                 continue;
@@ -298,7 +290,7 @@ bool FileServer::sendFileToClient(int newfd)
         if(bytesToTransfer > 0 && bytesToTransfer < SIZE_BUFFER) // TODO
         {
             fread(buffer.get(), sizeof(char), bytesToTransfer, fd);
-            ::send(newfd, buffer.get(), bytesToTransfer, 0);
+            connection.send(buffer.get(), bytesToTransfer);
             break;
         }
     }
@@ -344,11 +336,11 @@ uint64_t FileServer::seek2File(uint64_t id)
     return 0;
 }
 
-uint64_t FileServer::eventType(int connection)
+uint64_t FileServer::eventType(Socket & connection)
 {
     uint64_t type = -1;
     int retries = 100;
-    while(--retries && sizeof(uint64_t) != ::recv( connection, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0))
+    while(--retries && sizeof(uint64_t) != connection.recv(&type, sizeof(uint64_t)))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // give the client time to send type
         //cout << "Send line: 275\n";
