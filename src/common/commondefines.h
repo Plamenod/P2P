@@ -17,8 +17,10 @@
 #endif
 
 enum Command: char {
-    GET_PEERS = 1,
-    LISTENING_PORT = 2,
+    PING,
+    PONG,
+    GET_PEERS,
+    LISTENING_PORT
 };
 
 struct PeerInfo {
