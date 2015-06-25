@@ -43,17 +43,17 @@ void P2PClient::connectToServer(const std::string& ip)
     sendPortsToMainServer();
 }
 
-size_t P2PClient::send(const void* buf, size_t size, int flags) const
+int P2PClient::send(const void* buf, size_t size, int flags)
 {
-    return ::send(socket.getFd(), reinterpret_cast<const char *>(buf), size, flags);
+    return socket.send(buf, size, flags);
 }
 
-size_t P2PClient::recv(void* buf, size_t size, int flags) const
+int P2PClient::recv(void* buf, size_t size, int flags)
 {
-    return ::recv(socket.getFd(), reinterpret_cast<char *>(buf), size, flags);
+    return socket.recv(buf, size, flags);
 }
 
-void P2PClient::sendPortsToMainServer() const
+void P2PClient::sendPortsToMainServer()
 {
     Command cmd = Command::LISTENING_PORT;
     char out_buff[OUT_BUFFERSIZE], *buff_ptr = out_buff;
@@ -69,7 +69,7 @@ void P2PClient::sendPortsToMainServer() const
     memcpy(out_buff + offset, &file_mgr_port, file_mgr_port_size);
 
     int data_size = cmd_size + server_port_size + file_mgr_port_size;
-    size_t sent = send(out_buff, data_size);
+    int sent = send(out_buff, data_size);
     if(sent <= 0) {
         std::cerr << "Sending listening port failed" << std::endl;
         exit(1);
@@ -80,7 +80,7 @@ void P2PClient::sendPortsToMainServer() const
     std::cout << "Server port:" << server_port << "\nFile mgr port: " << file_mgr_port << std::endl;
 }
 
-void P2PClient::getPeersInfo(std::vector<PeerInfo>& result) const
+void P2PClient::getPeersInfo(std::vector<PeerInfo>& result)
 {
     Command cmd = Command::GET_PEERS;
     int sent;
@@ -99,12 +99,12 @@ void P2PClient::getPeersInfo(std::vector<PeerInfo>& result) const
     receivePeersInfo(result);
 }
 
-void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result) const
+void P2PClient::receivePeersInfo(std::vector<PeerInfo>& result)
 {
     /** sleep in order to give main server time to answer */
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    size_t received;
+    int received;
     char buffer[IN_BUFFERSIZE], *buff_ptr = buffer;
     received = recv(buffer, IN_BUFFERSIZE);
     if(received <= 0) {

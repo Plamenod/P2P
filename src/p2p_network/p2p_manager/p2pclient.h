@@ -22,13 +22,14 @@ public:
     void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
 
     void connectToServer(const std::string& ip);
-    void getPeersInfo(std::vector<PeerInfo>& result) const;
+    void getPeersInfo(std::vector<PeerInfo>& result);
 
 private:
-    size_t send(const void* buf, size_t size, int flags = 0) const;
-    size_t recv(void* buf, size_t size, int flags = 0) const;
-    void receivePeersInfo(std::vector<PeerInfo>& result) const;
-    void sendPortsToMainServer()const;
+    int send(const void* buf, size_t size, int flags = 0);
+    int recv(void* buf, size_t size, int flags = 0);
+
+    void receivePeersInfo(std::vector<PeerInfo>& result);
+    void sendPortsToMainServer();
 
     Socket socket;
     uint16_t main_server_port;

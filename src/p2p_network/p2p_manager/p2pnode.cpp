@@ -4,7 +4,7 @@ P2PNode::~P2PNode()
 {
     stopServer();
 }
-std::vector<PeerInfo> P2PNode::get_peers() const
+std::vector<PeerInfo> P2PNode::get_peers()
 {
     std::vector<PeerInfo> peers;
     client.getPeersInfo(peers);
