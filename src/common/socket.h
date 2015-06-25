@@ -44,6 +44,7 @@ public:
 
     bool listen() const;
     ClientInfo accept() const;
+    Socket acceptSocket() const;
 
 private:
     int fd;

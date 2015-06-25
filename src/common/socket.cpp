@@ -145,3 +145,8 @@ ClientInfo Socket::accept() const
 
     return info;
 }
+
+Socket Socket::acceptSocket() const
+{
+    return Socket(::accept(this->fd, nullptr, nullptr));
+}
