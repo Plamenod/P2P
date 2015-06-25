@@ -92,7 +92,8 @@ uint64_t FileClient::send(
 
         int bytes_sent = -1;
         while (bytes_sent < 0) {
-            bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
+            bytes_sent = host_socket.send(buffer.get(), byte_read);
+
             if (bytes_sent == 0) {
                 std::cerr << "Connection to remote host closed while sending data" << std::endl;
                 return 0;
@@ -143,7 +144,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
     }
 
     uint64_t file_size;
-    if (::recv(host_socket.getFd(), reinterpret_cast<char*>(&file_size), sizeof(uint64_t), 0) != sizeof(uint64_t)) {
+    if (host_socket.recv(&file_size, sizeof(uint64_t)) != sizeof(uint64_t)) {
         std::cerr << "Failed to receive file size" << std::endl;
         return nullptr;
     }
@@ -161,11 +162,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
 		int byte_read = -1;
 		while (byte_read == -1) {
-			byte_read = ::recv(
-				host_socket.getFd(),
-				reinterpret_cast<char*>(file_content.get() + offset),
-				file_size,
-				0);
+            byte_read = host_socket.recv(file_content.get() + offset, file_size);
 
             if (byte_read == 0) {
                 std::cerr << "Remote socket closed during receiveing of file" << std::endl;
@@ -181,25 +178,20 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
     return std::move(file_content);
 }
 
-bool FileClient::sendNumber(const Socket& host_socket, uint64_t number) {
+bool FileClient::sendNumber(Socket& host_socket, uint64_t number) {
 
-    int byte_sent = ::send(
-        host_socket.getFd(),
-        reinterpret_cast<const char *>(&number),
-        sizeof(number),
-        0);
-
+    int byte_sent = host_socket.send(&number, sizeof(number));
     if (byte_sent != sizeof(number)) {
         return false;
     }
     return true;
 }
 
-uint64_t FileClient::getFileID(const Socket& host_socket) {
+uint64_t FileClient::getFileID(Socket& host_socket) {
 	uint64_t file_id = 0;
 
 	int file_read = -1, retries = 10;
-	while (--retries && sizeof(uint64_t) != ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0)) {
+    while (--retries && sizeof(uint64_t) != host_socket.recv(&file_id, sizeof(file_id))) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
