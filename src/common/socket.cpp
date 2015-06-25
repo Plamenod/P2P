@@ -18,7 +18,7 @@
 
 
 
-Socket::Socket(int fdesc) : fd(fdesc)
+Socket::Socket() : fd(INVALID_SOCKFD)
 {
 #ifdef C_WIN_SOCK
     // init MS lib
@@ -28,10 +28,18 @@ Socket::Socket(int fdesc) : fd(fdesc)
 
     this->fd = socket(AF_INET, SOCK_STREAM, PROTOCOL);
 
-    if(this->fd < 0){
+    if (this->fd == INVALID_SOCKFD) {
         std::cerr << "Cannot create socket !\n";
         exit(1);
     }
+}
+
+Socket::Socket(int sockFd): fd(sockFd) {
+#ifdef C_WIN_SOCK
+    // init MS lib
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
 }
 
 
