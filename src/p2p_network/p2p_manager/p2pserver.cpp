@@ -1,6 +1,7 @@
 #include "p2pserver.h"
 #include <iostream>
-
+#include <thread>
+#include <chrono>
 const unsigned int BUFFERSIZE = 1024;
 
 void P2PServer::setPorts(uint16_t port)
@@ -19,16 +20,7 @@ void P2PServer::start(bool& flag) const
 void P2PServer::run(bool& flag) const
 {
     while(flag) {
-        ClientInfo client = socket.accept();
-        if (client.sock_fd == -1) {
-            continue;
-        }
-        char* ip_addr = inet_ntoa(client.addr.sin_addr);
-        std::cout << "Accepted a client with ip " << ip_addr << std::endl;
-#ifdef C_WIN_SOCK
-        closesocket(client.sock_fd);
-#else
-        close(client.sock_fd);
-#endif
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        Socket client = socket.acceptSocket(); // just accept connections from main server
     }
 }
