@@ -61,6 +61,7 @@ uint64_t FileClient::send(
         return 0;
     }
     
+	// this is used only to close the file at scope exit
     auto file_deleter = std::shared_ptr<FILE>(file_to_send, [](FILE * f) {
         fclose(f);
     });
@@ -106,6 +107,11 @@ uint64_t FileClient::send(
 
 	uint64_t fileID = getFileID(host_socket);
 
+	if (fileID == 0) {
+		std::cerr << "Failed to receive file id from server" << std::endl;
+		return 0;
+	}
+
 	if (!writeKeyToFile(cryptor.getSave(fileID))) {
 		std::cerr << "Failed to save encrytion key for file" << std::endl;
 		return 0;
@@ -120,7 +126,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
 	Socket host_socket;
 
-    if (0 != host_socket.connectTo(ip, port);) {
+    if (0 != host_socket.connectTo(ip, port)) {
         std::cerr << "Failed to connect to client " << host << std::endl;
         return nullptr;
     }
@@ -167,7 +173,6 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
             }
 		}
 		encrypt.encryptDecrypt(file_content.get() + offset, byte_read);
-        //printf("byte read: %d \n Message: %s\nfile size: %lu\n", byte_read, file_content.get(), file_size);
 
         file_size -= byte_read;
         offset += byte_read;
@@ -192,16 +197,11 @@ bool FileClient::sendNumber(const Socket& host_socket, uint64_t number) {
 
 uint64_t FileClient::getFileID(const Socket& host_socket) {
 	uint64_t file_id = 0;
-    //int file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
-	int file_read = -1;
-	while (file_read == -1) {
-		file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
-	}
 
-    //if (file_read != sizeof(uint64_t)) {
-    //    std::cerr << "Failed to read from socket" << std::endl;
-    //    return 0;
-    //}
+	int file_read = -1, retries = 10;
+	while (--retries && sizeof(uint64_t) != ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0)) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
 
     return file_id;
 }
