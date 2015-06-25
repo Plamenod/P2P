@@ -52,14 +52,13 @@ private:
     FILE* fd;
     InfoData info;
 
-    int acceptClient();
+    Socket acceptClient();
     bool recieveSizeOfFile(int);
     uint64_t getIdByClient(int);
 
     bool isBind;
 
     int port;
-    int  connection;
     uint64_t nextFreeId;
     std::vector<uint64_t> all_ids;
 

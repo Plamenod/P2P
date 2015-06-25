@@ -51,15 +51,15 @@ FileServer::~FileServer()
 }
 
 
-int FileServer::acceptClient() // TODO change the name
+Socket FileServer::acceptClient()
 {
-    return accept(socket, nullptr, nullptr);
+    return this->socket.acceptSocket();
 }
 
 
 bool FileServer::receive()
 {
-    connection = acceptClient();
+    Socket connection = acceptClient();
 
     if (connection < 0)
     {
@@ -79,12 +79,6 @@ bool FileServer::receive()
         result = sendFileToClient(connection);
         break;
     }
-
-#ifdef C_WIN_SOCK
-	closesocket(connection);
-#else
-	close(connection);
-#endif
 
     return result;
 }
