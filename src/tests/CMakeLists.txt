@@ -25,7 +25,7 @@ include_directories(../p2p_network/main_server)
 include_directories(../p2p_network/p2p_manager)
 include_directories(../file_manager)
 
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -pthread ${CMAKE_CXX_FLAGS}")
 
 add_executable(${PROJECT_NAME}
 	${MS_HEADERS} ${MS_SOURCES}
