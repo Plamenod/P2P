@@ -33,9 +33,12 @@ Socket::Socket() : fd(INVALID_SOCKFD)
         std::cerr << "Cannot create socket !\n";
         exit(1);
     }
+    this->clearBlockFlag();
 }
 
-Socket::Socket(int sockFd): fd(sockFd) {
+Socket::Socket(int sockFd): fd(sockFd)
+{
+    this->clearBlockFlag();
 #ifdef C_WIN_SOCK
     // init MS lib
     WSADATA wsaData;
@@ -48,6 +51,7 @@ Socket::Socket(Socket&& other)
 {
     this->fd = other.fd;
     other.fd = INVALID_SOCKFD;
+    this->clearBlockFlag();
 }
 
 Socket & Socket::operator=(Socket && other)
@@ -75,6 +79,7 @@ Socket::~Socket()
 
 uint32_t Socket::getPeerAddress()
 {
+    this->clearBlockFlag();
     if (this->fd == INVALID_SOCKFD) {
         return 0;
     }
@@ -83,14 +88,16 @@ uint32_t Socket::getPeerAddress()
 
 std::string Socket::getPeerName()
 {
+    this->clearBlockFlag();
     if (this->fd == INVALID_SOCKFD)
         return "";
 
     return std::string(inet_ntoa(getSockAddr().sin_addr));
 }
 
-void Socket::bindTo(unsigned short port) const
+void Socket::bindTo(unsigned short port)
 {
+    this->clearBlockFlag();
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 
@@ -116,8 +123,9 @@ void Socket::bindTo(unsigned short port) const
 }
 
 
-int Socket::connectTo(const std::string& ip, uint16_t port) const
+int Socket::connectTo(const std::string& ip, uint16_t port)
 {
+    this->clearBlockFlag();
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
@@ -130,19 +138,30 @@ int Socket::connectTo(const std::string& ip, uint16_t port) const
     return connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr));
 }
 
-int Socket::connectTo(const sockaddr_in* server_addr) const
+int Socket::connectTo(const sockaddr_in* server_addr)
 {
+    this->clearBlockFlag();
     return connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr));
 }
 
 int Socket::recv(void * buf, int len, int flags)
 {
-    return ::recv(this->fd, reinterpret_cast<char *>(buf), len, flags);
+    this->clearBlockFlag();
+    int result = ::recv(this->fd, reinterpret_cast<char *>(buf), len, flags);
+    if (result == -1) {
+        this->setBlockFlag();
+    }
+    return result;
 }
 
 int Socket::send(const void * buf, int len, int flags)
 {
-    return ::send(this->fd, reinterpret_cast<const char *>(buf), len, flags);
+    this->clearBlockFlag();
+    int result = ::send(this->fd, reinterpret_cast<const char *>(buf), len, flags);
+    if (result == -1) {
+        this->setBlockFlag();
+    }
+    return result;
 }
 
 void Socket::addOption(int option)
@@ -151,7 +170,7 @@ void Socket::addOption(int option)
     setsockopt(this->fd, SOL_SOCKET, option, reinterpret_cast<const char*>(&opt_val), sizeof(int));
 }
 
-bool Socket::makeNonblocking() const
+bool Socket::makeNonblocking()
 {
 
 #ifdef C_WIN_SOCK
@@ -166,29 +185,39 @@ bool Socket::makeNonblocking() const
 }
 
 
-bool Socket::listen() const
+bool Socket::listen()
 {
     return (::listen(this->fd, BACKLOG) == 0);
 }
 
 
-ClientInfo Socket::accept() const
+ClientInfo Socket::accept()
 {
+    this->clearBlockFlag();
+
     ClientInfo info;
     socklen_t addr_size = sizeof(info.addr);
     info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, &addr_size);
-
-    /*if(info.sock_fd != INVALID_SOCKFD || true){
-        std::cerr << "Error accepting connection request!\n";
-        exit(1);
-    }*/
+    if (info.sock_fd == -1) {
+        this->setBlockFlag();
+    }
 
     return info;
 }
 
-Socket Socket::acceptSocket() const
+Socket Socket::acceptSocket()
 {
-    return Socket(::accept(this->fd, nullptr, nullptr));
+    this->clearBlockFlag();
+    Socket s(::accept(this->fd, nullptr, nullptr));
+    if (s == -1) {
+        this->setBlockFlag();
+    }
+    return s;
+}
+
+bool Socket::wouldHaveBlocked()
+{
+    return wasBlocking;
 }
 
 sockaddr_in Socket::getSockAddr()
@@ -210,4 +239,19 @@ void Socket::close()
         this->fd = INVALID_SOCKFD;
     }
 
+}
+
+void Socket::setBlockFlag()
+{
+#ifdef C_WIN_SOCK
+    int err = WSAGetLastError();
+    wasBlocking = err && err == WSAEWOULDBLOCK;
+#else
+    wasBlocking = errno && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+}
+
+void Socket::clearBlockFlag()
+{
+    this->wasBlocking = false;
 }

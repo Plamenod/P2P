@@ -41,26 +41,33 @@ public:
     uint32_t getPeerAddress();
     std::string getPeerName();
 
-    void bindTo(unsigned short port) const;
-    int connectTo(const std::string& ip, uint16_t port) const;
-    int connectTo(const sockaddr_in* server_addr) const;
+    void bindTo(unsigned short port);
+    int connectTo(const std::string& ip, uint16_t port);
+    int connectTo(const sockaddr_in* server_addr);
 
     int recv(void * buf, int len, int flags = 0);
     int send(const void * buf, int len, int flags = 0);
 
     void addOption(int option = SO_REUSEADDR);
-    bool makeNonblocking() const;
+    bool makeNonblocking();
 
-    bool listen() const;
-    ClientInfo accept() const;
-    Socket acceptSocket() const;
+    bool listen();
+    ClientInfo accept();
+    Socket acceptSocket();
+
+    bool wouldHaveBlocked();
 
 private:
     sockaddr_in getSockAddr();
     void close();
-
+    void setBlockFlag();
+    void clearBlockFlag();
 
 private:
+    // Flag only used with nonblocking sockets - it will be set to true if the last
+    // performed action on the socket - send/recv/accept would have blocked if the
+    // socket was in blocking mode
+    bool wasBlocking;
     int fd;
 };
 
