@@ -3,7 +3,6 @@
 
 #include "p2p_network_interface.h"
 #include "p2pclient.h"
-#include "p2pserver.h"
 #include <thread>
 
 #define MAIN_SERVER_PORT 23456
@@ -18,7 +17,7 @@ public:
         uint16_t server_port = SERVER_PORT,
         uint16_t file_mgr_port = FILE_MANAGER_PORT
         ) :
-        client(main_server_port, server_port, file_mgr_port), server(server_port) {}
+        client(main_server_port, server_port, file_mgr_port) {}
     virtual ~P2PNode();
     virtual std::vector<PeerInfo> get_peers();
 
@@ -26,14 +25,8 @@ public:
     virtual void stop();
 
     virtual void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
-
-    void startServer();
-    void stopServer();
 private:
     P2PClient client;
-    P2PServer server;
-    std::thread server_thread;
-    bool server_flag;
 };
 
 
