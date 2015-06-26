@@ -9,7 +9,7 @@ void P2PServer::setPorts(uint16_t port)
     this->port = port;
 }
 
-void P2PServer::start(bool& flag) const
+void P2PServer::start(bool& flag)
 {
     this->socket.bindTo(port);
 	this->socket.makeNonblocking();
@@ -17,7 +17,7 @@ void P2PServer::start(bool& flag) const
     this->run(flag);
 }
 
-void P2PServer::run(bool& flag) const
+void P2PServer::run(bool& flag)
 {
     while(flag) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
