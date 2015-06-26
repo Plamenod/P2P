@@ -5,13 +5,14 @@
 #include <stdint.h>
 #include <sstream>
 #include <algorithm>
+#include <thread>
 //#include "Encryption.h"
 
 #define MAX_SIZE 4000
 #define BYTE_TO_RECEIVE 100
 #define KEY_LENGTH 5
 
-FileClient::FileClient() : connected(false){
+FileClient::FileClient() {
 
 }
 
@@ -36,10 +37,10 @@ uint64_t FileClient::send(
     std::string ip = getHost(host);
     unsigned short host_port = getPort(host);
 
-    //if (!connected) {
-        host_socket.connectTo(ip, host_port);
-        connected = true;
-    //}
+    if (0 != host_socket.connectTo(ip, host_port)) {
+        std::cerr << "Failed to connect to client " << host << std::endl;
+        return 0;
+    }
 
     uint64_t send_file_event = 0;
     if (!sendNumber(host_socket, send_file_event)) {
@@ -57,13 +58,16 @@ uint64_t FileClient::send(
 
     if (!file_to_send) {
         std::cerr << "Failed to open file to send" << std::endl;
-        fclose(file_to_send);
         return 0;
     }
+    
+	// this is used only to close the file at scope exit
+    auto file_deleter = std::shared_ptr<FILE>(file_to_send, [](FILE * f) {
+        fclose(f);
+    });
 
     if (fseek(file_to_send, from, SEEK_SET)) {
         std::cerr << "Failed to seek to position " << from << std::endl;
-        fclose(file_to_send);
         return 0;
     }
 
@@ -81,32 +85,39 @@ uint64_t FileClient::send(
 
         if (ferror(file_to_send)) {
             std::cerr << "Failed to read file content" << std::endl;
-            fclose(file_to_send);
             return 0;
         }
 
 		cryptor.encryptDecrypt(buffer.get(), byte_read);
 
-		int bytes_sent = -1;
-		while (bytes_sent == -1) {
-			bytes_sent = ::send(host_socket.getFd(), buffer.get(), byte_read, 0);
-		}
+        int bytes_sent = -1;
+        while (bytes_sent < 0) {
+            bytes_sent = host_socket.send(buffer.get(), byte_read);
 
+            if (bytes_sent == 0) {
+                std::cerr << "Connection to remote host closed while sending data" << std::endl;
+                return 0;
+            }
+        }
+		
         if (bytes_sent == -1) {
             std::cerr << "Failed to write to socket" << std::endl;
-            fclose(file_to_send);
             return 0;
         }
     }
 
 	uint64_t fileID = getFileID(host_socket);
 
+	if (fileID == 0) {
+		std::cerr << "Failed to receive file id from server" << std::endl;
+		return 0;
+	}
+
 	if (!writeKeyToFile(cryptor.getSave(fileID))) {
 		std::cerr << "Failed to save encrytion key for file" << std::endl;
 		return 0;
 	}
 
-    fclose(file_to_send);
     return fileID;
 }
 
@@ -116,9 +127,10 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
 	Socket host_socket;
 
-    //if (!connected) {
-        host_socket.connectTo(ip, port);
-    //}
+    if (0 != host_socket.connectTo(ip, port)) {
+        std::cerr << "Failed to connect to client " << host << std::endl;
+        return nullptr;
+    }
 
     uint64_t request_file_event = 1;
     if (!sendNumber(host_socket, request_file_event)) {
@@ -132,7 +144,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
     }
 
     uint64_t file_size;
-    if (::recv(host_socket.getFd(), reinterpret_cast<char*>(&file_size), sizeof(uint64_t), 0) != sizeof(uint64_t)) {
+    if (host_socket.recv(&file_size, sizeof(uint64_t)) != sizeof(uint64_t)) {
         std::cerr << "Failed to receive file size" << std::endl;
         return nullptr;
     }
@@ -150,11 +162,7 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
 
 		int byte_read = -1;
 		while (byte_read == -1) {
-			byte_read = ::recv(
-				host_socket.getFd(),
-				reinterpret_cast<char*>(file_content.get() + offset),
-				file_size,
-				0);
+            byte_read = host_socket.recv(file_content.get() + offset, file_size);
 
             if (byte_read == 0) {
                 std::cerr << "Remote socket closed during receiveing of file" << std::endl;
@@ -162,7 +170,6 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
             }
 		}
 		encrypt.encryptDecrypt(file_content.get() + offset, byte_read);
-        //printf("byte read: %d \n Message: %s\nfile size: %lu\n", byte_read, file_content.get(), file_size);
 
         file_size -= byte_read;
         offset += byte_read;
@@ -171,32 +178,22 @@ std::unique_ptr<char[]> FileClient::getFile(const std::string& host, uint64_t id
     return std::move(file_content);
 }
 
-bool FileClient::sendNumber(const Socket& host_socket, uint64_t number) {
+bool FileClient::sendNumber(Socket& host_socket, uint64_t number) {
 
-    int byte_sent = ::send(
-        host_socket.getFd(),
-        reinterpret_cast<const char *>(&number),
-        sizeof(number),
-        0);
-
+    int byte_sent = host_socket.send(&number, sizeof(number));
     if (byte_sent != sizeof(number)) {
         return false;
     }
     return true;
 }
 
-uint64_t FileClient::getFileID(const Socket& host_socket) {
+uint64_t FileClient::getFileID(Socket& host_socket) {
 	uint64_t file_id = 0;
-    //int file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
-	int file_read = -1;
-	while (file_read == -1) {
-		file_read = ::recv(host_socket.getFd(), reinterpret_cast<char *>(&file_id), sizeof(uint64_t), 0);
-	}
 
-    //if (file_read != sizeof(uint64_t)) {
-    //    std::cerr << "Failed to read from socket" << std::endl;
-    //    return 0;
-    //}
+	int file_read = -1, retries = 10;
+    while (--retries && sizeof(uint64_t) != host_socket.recv(&file_id, sizeof(file_id))) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
 
     return file_id;
 }

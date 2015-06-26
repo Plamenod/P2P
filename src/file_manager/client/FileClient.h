@@ -36,14 +36,14 @@ private:
     * @param number number to send
     * @return true on success, false on failure
     */
-    bool sendNumber(const Socket& host_socket, uint64_t number);
+    bool sendNumber(Socket& host_socket, uint64_t number);
 
     /**
     * @brief get file ID from host_socket
     * @param host_socket socket to receive ID from
     * @return 0 on failure
     */
-    uint64_t getFileID(const Socket& host_socket);
+    uint64_t getFileID(Socket& host_socket);
 
     /**
      * @return key that maps to id on success, empty string on failure
@@ -51,11 +51,6 @@ private:
 	Encryption getKeyFromId(uint64_t id);
 
     bool writeKeyToFile(const Encryption::KeySave & );
-
-    //Socket host_socket;
-    bool connected;
-//    Encryption cryptor;
-
 };
 
 #endif /* FILECLIENT_H_ */

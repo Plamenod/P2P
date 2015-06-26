@@ -24,8 +24,11 @@ class Socket{
 
 public:
 
-    Socket(int fdesc = INVALID_SOCKFD);
+    explicit Socket(int fdesc);
+    Socket();
+
     Socket(Socket&& other); //move constructor
+    Socket & operator=(Socket && other); // move assign
 
     Socket(const Socket& other) = delete;
     Socket& operator =(const Socket& other) = delete;
@@ -35,17 +38,36 @@ public:
     operator int() const { return fd; };
     int getFd() const { return fd; };
 
-    void bindTo(unsigned short port) const;
-    int connectTo(const std::string& ip, uint16_t port) const;
-    int connectTo(const sockaddr_in* server_addr) const;
+    uint32_t getPeerAddress();
+    std::string getPeerName();
+
+    void bindTo(unsigned short port);
+    int connectTo(const std::string& ip, uint16_t port);
+    int connectTo(const sockaddr_in* server_addr);
+
+    int recv(void * buf, int len, int flags = 0);
+    int send(const void * buf, int len, int flags = 0);
 
     void addOption(int option = SO_REUSEADDR);
-    void makeNonblocking() const;
+    bool makeNonblocking();
 
-    bool listen() const;
-    ClientInfo accept() const;
+    bool listen();
+    ClientInfo accept();
+    Socket acceptSocket();
+
+    bool wouldHaveBlocked();
+    void close();
 
 private:
+    sockaddr_in getSockAddr();
+    void setBlockFlag();
+    void clearBlockFlag();
+
+private:
+    // Flag only used with nonblocking sockets - it will be set to true if the last
+    // performed action on the socket - send/recv/accept would have blocked if the
+    // socket was in blocking mode
+    bool wasBlocking;
     int fd;
 };
 

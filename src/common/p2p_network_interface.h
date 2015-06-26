@@ -8,7 +8,7 @@
 
 class P2PNetworkInterface {
 public:
-    virtual std::vector<PeerInfo> get_peers() const = 0;
+    virtual std::vector<PeerInfo> get_peers() = 0;
 
     virtual void start(const std::string& server_ip) = 0;
     virtual void stop() = 0;

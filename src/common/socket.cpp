@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "socket.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -18,7 +19,7 @@
 
 
 
-Socket::Socket(int fdesc) : fd(fdesc)
+Socket::Socket() : fd(INVALID_SOCKFD)
 {
 #ifdef C_WIN_SOCK
     // init MS lib
@@ -28,10 +29,21 @@ Socket::Socket(int fdesc) : fd(fdesc)
 
     this->fd = socket(AF_INET, SOCK_STREAM, PROTOCOL);
 
-    if(this->fd < 0){
+    if (this->fd == INVALID_SOCKFD) {
         std::cerr << "Cannot create socket !\n";
         exit(1);
     }
+    this->clearBlockFlag();
+}
+
+Socket::Socket(int sockFd): fd(sockFd)
+{
+    this->clearBlockFlag();
+#ifdef C_WIN_SOCK
+    // init MS lib
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
 }
 
 
@@ -39,21 +51,53 @@ Socket::Socket(Socket&& other)
 {
     this->fd = other.fd;
     other.fd = INVALID_SOCKFD;
+    this->clearBlockFlag();
+}
+
+Socket & Socket::operator=(Socket && other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    if (this->fd != INVALID_SOCKFD) {
+        this->close();
+    }
+
+    this->fd = other.fd;
+    other.fd = INVALID_SOCKFD;
+
+    return *this;
 }
 
 
 Socket::~Socket()
 {
-#ifdef C_WIN_SOCK
-    closesocket(this->fd);
-#else
-    close(this->fd);
-#endif
+    this->close();
 }
 
 
-void Socket::bindTo(unsigned short port) const
+uint32_t Socket::getPeerAddress()
 {
+    this->clearBlockFlag();
+    if (this->fd == INVALID_SOCKFD) {
+        return 0;
+    }
+    return getSockAddr().sin_addr.s_addr;
+}
+
+std::string Socket::getPeerName()
+{
+    this->clearBlockFlag();
+    if (this->fd == INVALID_SOCKFD)
+        return "";
+
+    return std::string(inet_ntoa(getSockAddr().sin_addr));
+}
+
+void Socket::bindTo(unsigned short port)
+{
+    this->clearBlockFlag();
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 
@@ -67,12 +111,6 @@ void Socket::bindTo(unsigned short port) const
 
     int yes = 1;
     if (setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&yes), sizeof(int)) == -1) {
-
-#ifdef C_WIN_SOCK
-        closesocket(this->fd);
-#else
-        close(this->fd);
-#endif
         std::cerr << "Failed to setsockop SO_REUSEADDR\n";
         exit(1);
     }
@@ -85,8 +123,9 @@ void Socket::bindTo(unsigned short port) const
 }
 
 
-int Socket::connectTo(const std::string& ip, uint16_t port) const
+int Socket::connectTo(const std::string& ip, uint16_t port)
 {
+    this->clearBlockFlag();
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
@@ -99,9 +138,30 @@ int Socket::connectTo(const std::string& ip, uint16_t port) const
     return connect(this->fd, (sockaddr*)&server_addr, sizeof(server_addr));
 }
 
-int Socket::connectTo(const sockaddr_in* server_addr) const
+int Socket::connectTo(const sockaddr_in* server_addr)
 {
+    this->clearBlockFlag();
     return connect(this->fd, (sockaddr*)server_addr, sizeof(*server_addr));
+}
+
+int Socket::recv(void * buf, int len, int flags)
+{
+    this->clearBlockFlag();
+    int result = ::recv(this->fd, reinterpret_cast<char *>(buf), len, flags);
+    if (result == -1) {
+        this->setBlockFlag();
+    }
+    return result;
+}
+
+int Socket::send(const void * buf, int len, int flags)
+{
+    this->clearBlockFlag();
+    int result = ::send(this->fd, reinterpret_cast<const char *>(buf), len, flags);
+    if (result == -1) {
+        this->setBlockFlag();
+    }
+    return result;
 }
 
 void Socket::addOption(int option)
@@ -110,8 +170,7 @@ void Socket::addOption(int option)
     setsockopt(this->fd, SOL_SOCKET, option, reinterpret_cast<const char*>(&opt_val), sizeof(int));
 }
 
-
-void Socket::makeNonblocking() const
+bool Socket::makeNonblocking()
 {
 
 #ifdef C_WIN_SOCK
@@ -120,28 +179,79 @@ void Socket::makeNonblocking() const
 #else
     if(fcntl(this->fd, F_SETFL, O_NONBLOCK) == -1) {
 #endif
-        std::cerr << "Cannot make socket nonblocking!\n";
-        exit(1);
+        return false;
     }
+    return true;
 }
 
 
-bool Socket::listen() const
+bool Socket::listen()
 {
     return (::listen(this->fd, BACKLOG) == 0);
 }
 
 
-ClientInfo Socket::accept() const
+ClientInfo Socket::accept()
 {
+    this->clearBlockFlag();
+
     ClientInfo info;
     socklen_t addr_size = sizeof(info.addr);
     info.sock_fd = ::accept(this->fd, (sockaddr *) &info.addr, &addr_size);
-
-    /*if(info.sock_fd != INVALID_SOCKFD || true){
-        std::cerr << "Error accepting connection request!\n";
-        exit(1);
-    }*/
+    if (info.sock_fd == -1) {
+        this->setBlockFlag();
+    }
 
     return info;
+}
+
+Socket Socket::acceptSocket()
+{
+    this->clearBlockFlag();
+    Socket s(::accept(this->fd, nullptr, nullptr));
+    if (s == -1) {
+        this->setBlockFlag();
+    }
+    return s;
+}
+
+bool Socket::wouldHaveBlocked()
+{
+    return wasBlocking;
+}
+
+sockaddr_in Socket::getSockAddr()
+{
+    sockaddr_in info;
+    socklen_t size = sizeof(sockaddr_in);
+    getpeername(this->fd, reinterpret_cast<sockaddr*>(&info), &size);
+    return info;
+}
+
+void Socket::close()
+{
+    if (this->fd != INVALID_SOCKFD) {
+#ifdef C_WIN_SOCK
+        closesocket(this->fd);
+#else
+        close(this->fd);
+#endif
+        this->fd = INVALID_SOCKFD;
+    }
+
+}
+
+void Socket::setBlockFlag()
+{
+#ifdef C_WIN_SOCK
+    int err = WSAGetLastError();
+    wasBlocking = err && err == WSAEWOULDBLOCK;
+#else
+    wasBlocking = errno && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+}
+
+void Socket::clearBlockFlag()
+{
+    this->wasBlocking = false;
 }

@@ -5,15 +5,13 @@
 #include "commondefines.h"
 #include <string>
 #include <vector>
+#include <thread>
+#include <mutex>
 
 class P2PClient
 {
 public:
-    P2PClient(uint16_t main_server_port, uint16_t server_port, uint16_t file_mgr_port):
-        main_server_port(main_server_port),
-        server_port(server_port) ,
-        file_mgr_port(file_mgr_port) {}
-
+    P2PClient(uint16_t main_server_port, uint16_t server_port, uint16_t file_mgr_port);
 
     P2PClient(const P2PClient&) = delete;
     P2PClient& operator=(const P2PClient&) = delete;
@@ -22,15 +20,25 @@ public:
     void setPorts(uint16_t ms_port, uint16_t server_port, uint16_t file_mgr_port);
 
     void connectToServer(const std::string& ip);
-    void getPeersInfo(std::vector<PeerInfo>& result) const;
+    void disconnectFromServer();
+
+    void getPeersInfo(std::vector<PeerInfo>& result);
 
 private:
-    size_t send(const void* buf, size_t size, int flags = 0) const;
-    size_t recv(void* buf, size_t size, int flags = 0) const;
-    void receivePeersInfo(std::vector<PeerInfo>& result) const;
-    void sendPortsToMainServer()const;
+    void workerLoop();
+
+    void receivePeersInfo(std::vector<PeerInfo>& result);
+    void sendPortsToMainServer();
+
+private:
 
     Socket socket;
+
+    // used to protect getPeerInfo
+    std::mutex workerMutex;
+    std::thread workerThread;
+    bool isRunning;
+
     uint16_t main_server_port;
     uint16_t server_port;
     uint16_t file_mgr_port;

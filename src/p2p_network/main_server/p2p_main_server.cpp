@@ -19,7 +19,7 @@ void P2PMainServer::start(int port)
     this->socket.makeNonblocking();
 
     this->socket.bindTo(port);
-    if(!this->socket.listen()){
+    if (!this->socket.listen()) {
         std::cerr << "Unsuccessful listening request!\n";
         exit(1);
     }
@@ -28,55 +28,32 @@ void P2PMainServer::start(int port)
     memset(buffer, 0, sizeof(buffer));
 
     std::cout << "Server waiting for connections at port " << port << std::endl;
-	isRunning = true;
-    while(isRunning) {
+    isRunning = true;
+    while (isRunning) {
         serveConnectedClients(buffer);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        ClientInfo current_client = this->socket.accept();
-        if(current_client.sock_fd == -1) {
+        Socket client = this->socket.acceptSocket();
+        if (client == -1) {
             continue;
         }
-        handleClientConnect(current_client);
-        char* client_ip_addr = inet_ntoa(current_client.addr.sin_addr);
-        std::cout << "Accepted connection from " << client_ip_addr << std::endl;
-        std::cout << "File descriptor " << current_client.sock_fd << std::endl;
+        handleClientConnect(client);
     }
 }
 
 void P2PMainServer::stop() {
-	isRunning = false;
+    isRunning = false;
 }
 
-size_t P2PMainServer::recv(int fd, void* buf, size_t buf_size, int flags) const
+void P2PMainServer::handleClientConnect(Socket & client)
 {
-    return ::recv(fd, reinterpret_cast<char *>(buf), buf_size, flags);
-}
 
-size_t P2PMainServer::send(int fd, const void* buf, size_t msg_size, int flags) const
-{
-    return ::send(fd, reinterpret_cast<const char *>(buf), msg_size, flags);
-}
-
-void P2PMainServer::handleClientConnect(ClientInfo& client)
-{
-    if(client.sock_fd != INVALID_SOCKFD) {
-        client.connected = true;
-        client.server_port = 0;
-        client.file_mgr_port = 0;
-        /** make the socket non-blocking so recv does not block
-          * when called in serveConnectedClients
-          */
-
-#ifdef C_WIN_SOCK
-        u_long mode = 1;
-        if (ioctlsocket(client.sock_fd, FIONBIO, &mode) != NO_ERROR) {
-#else
-        if (fcntl(client.sock_fd, F_SETFL, O_NONBLOCK) == -1) {
-#endif
-            std::cerr << "Cannot make client socket non-blocking !\n";
+    if (client != -1) {
+        if (!client.makeNonblocking()) {
+            std::cerr << "Failed to set client to nonblocking !\n";
             exit(1);
         }
-        this->clients.push_back(client);
+
+        this->clients.emplace_back(ClientDescriptor{ std::move(client), 0, 0 });
     }
 }
 
@@ -85,51 +62,40 @@ void P2PMainServer::serveConnectedClients(char* in_buffer)
     size_t clients_count = this->clients.size();
     Command cmd;
 
-	std::vector<int> dcClient;
+    std::vector<int> dcClient;
 
-    for(size_t i = 0; i < clients_count; ++i) {
-        int received_len = recv(clients[i].sock_fd, &cmd, sizeof(cmd));
-		if (received_len == 0) {
-			// save all indecies of disconnected clients
-			dcClient.push_back(i);
-		} else if (received_len == -1) {
-			bool wouldBlock = false;
-
-#ifdef C_WIN_SOCK
-			int err = WSAGetLastError();
-			wouldBlock =  err && err == WSAEWOULDBLOCK;
-#else
-			wouldBlock = errno && (errno == EAGAIN || errno == EWOULDBLOCK);
-#endif
-
-			if (!wouldBlock) {
-				dcClient.push_back(i);
-			}
-
-		} else if (received_len == sizeof(Command)) {
-            switch(cmd) {
-                case Command::GET_PEERS:
-                    sendPeersInfo(i);
-                    break;
-                case Command::LISTENING_PORT:
-                    acceptClientListeningPort(in_buffer, i);
-                    break;
-                default:
-                    break;
+    for (size_t i = 0; i < clients_count; ++i) {
+        int received_len = clients[i].sock.recv(&cmd, sizeof(cmd));
+        if (received_len == 0) {
+            // save all indecies of disconnected clients
+            dcClient.push_back(i);
+        } else if (received_len == -1 && !clients[i].sock.wouldHaveBlocked()) {
+            // error other than non block wait
+            dcClient.push_back(i);
+        } else if (received_len == sizeof(Command)) {
+            switch (cmd) {
+            case Command::GET_PEERS:
+                sendPeersInfo(i);
+                break;
+            case Command::LISTENING_PORT:
+                acceptClientListeningPort(in_buffer, i);
+                break;
+            default:
+                break;
             }
         }
     }
 
-	if (dcClient.size() > 0) {
-		int clientsCounter = 0;
-		// go trough the clients and remove those with saved indecies
-		clients.erase(std::remove_if(clients.begin(), clients.end(), [&](const ClientInfo &) {
-			return find(dcClient.begin(), dcClient.end(), clientsCounter++) != dcClient.end();
-		}), clients.end());
-	}
+    if (dcClient.size() > 0) {
+        int clientsCounter = 0;
+        // go trough the clients and remove those with saved indecies
+        clients.erase(std::remove_if(clients.begin(), clients.end(), [&](const ClientDescriptor &) {
+            return find(dcClient.begin(), dcClient.end(), clientsCounter++) != dcClient.end();
+        }), clients.end());
+    }
 }
 
-void P2PMainServer::sendPeersInfo(int out_peer_index) const
+void P2PMainServer::sendPeersInfo(int out_peer_index)
 {
     std::vector<ServerInfo> connected_peers;
 
@@ -143,7 +109,7 @@ void P2PMainServer::sendPeersInfo(int out_peer_index) const
     int port_size = sizeof(decltype(ServerInfo::server_port));
     int addr_size = sizeof(decltype(ServerInfo::ip_addr));
 
-    for(int i = 0; i < connected_peers.size(); ++i) {
+    for (int i = 0; i < connected_peers.size(); ++i) {
         memcpy(buffer + offset, &connected_peers[i].ip_addr, addr_size);
         offset += addr_size;
         memcpy(buffer + offset, &connected_peers[i].server_port, port_size);
@@ -152,8 +118,8 @@ void P2PMainServer::sendPeersInfo(int out_peer_index) const
         offset += port_size;
     }
     int msg_size = sizeof(count) + count * (addr_size + 2 * port_size);
-    int sent = send(clients[out_peer_index].sock_fd, buffer, msg_size);
-    if(sent < msg_size) {
+    int sent = clients[out_peer_index].sock.send(buffer, msg_size);
+    if (sent < msg_size) {
         std::cerr << "Failed sending peers info !" << std::endl;
         exit(1);
     }
@@ -161,25 +127,43 @@ void P2PMainServer::sendPeersInfo(int out_peer_index) const
     std::cout << count << " peers connected" << std::endl;
 }
 
-void P2PMainServer::checkPeers(std::vector<ServerInfo>& connected_peers, int out_peer_index) const
+void P2PMainServer::checkPeers(std::vector<ServerInfo> & connected_peers, int out_peer_index)
 {
     ServerInfo temp;
-    for(int i = 0; i < clients.size(); ++i) {
-        if(clients[i].server_port == 0 || i == out_peer_index) {
+    for (int i = 0; i < clients.size(); ++i) {
+        if (clients[i].server_port == 0 || i == out_peer_index) {
             continue;
         }
-        Socket sock;
-        sockaddr_in addr = clients[i].addr;
-        addr.sin_port = htons(clients[i].server_port);
-        /**connect to returns -1 on failure*/
-        //if(sock.connectTo(&addr) != -1) {
-        //    continue;
-        //}
 
-        temp.ip_addr = addr.sin_addr.s_addr;
-        temp.server_port = clients[i].server_port;
-        temp.file_mgr_port = clients[i].file_mgr_port;
-        connected_peers.push_back(temp);
+        Command cmd = Command::PING;
+
+        int sent = clients[i].sock.send(&cmd, sizeof(cmd));
+        if (sent == sizeof(cmd)) {
+            Command response;
+            int recv = -1, retries = 10;
+
+            while (--retries && -1 == (recv = clients[i].sock.recv(&response, sizeof(response)))) {
+                // give some time the client to reps to ping
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+
+            if (recv == sizeof(response)) {
+                if (response == Command::PONG) {
+
+                    temp.ip_addr = clients[i].sock.getPeerAddress();
+                    temp.server_port = clients[i].server_port;
+                    temp.file_mgr_port = clients[i].file_mgr_port;
+
+                    connected_peers.push_back(temp);
+                } else {
+                    // TODO: disconnect - unexpected rsponse to PING
+                }
+            } else {
+                // TODO: client received ping but failed to respond - disconnect
+            }
+        } else {
+            // TODO: maybe dicsconnect peers
+        }
     }
 }
 
@@ -190,8 +174,8 @@ void P2PMainServer::acceptClientListeningPort(char* in_buffer, int client_index)
     int file_mgr_port_size = sizeof(clients[client_index].file_mgr_port);
     int mesg_size = server_port_size + file_mgr_port_size;
 
-    int received = recv(clients[client_index].sock_fd, in_buffer, mesg_size);
-    if(received <= 0) {
+    int received = clients[client_index].sock.recv(in_buffer, mesg_size);
+    if (received <= 0) {
         std::cerr << "No server and file manager ports received !" << std::endl;
         exit(1);
     }

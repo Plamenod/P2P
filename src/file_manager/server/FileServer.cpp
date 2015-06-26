@@ -42,7 +42,7 @@ FileServer::FileServer(int port, string dbFilePath): dbFilePath(move(dbFilePath)
     //cout << "line 40\n";
     socket.bindTo(port);
     //cout << "line 42\n";
-    ::listen(socket, MAX_LENGTH_OF_QUEUE_PANDING);
+    this->socket.listen();
 }
 
 FileServer::~FileServer()
@@ -51,55 +51,62 @@ FileServer::~FileServer()
 }
 
 
-int FileServer::listen() // TODO change the name
+Socket FileServer::acceptClient()
 {
-    return accept(socket, nullptr, nullptr);
+    return this->socket.acceptSocket();
 }
 
 
 bool FileServer::receive()
 {
-    connection = listen();
+    Socket connection = acceptClient();
 
     if (connection < 0)
     {
-        return false; // TODO not bool
+        return true; // no client - all is ok
     }
 
-    if(eventType(connection) != 1)
+    bool result = false;
+    auto etype = eventType(connection);
+    switch (etype)
     {
+    case 0:
         if (initialAppend(connection)) {
-            appendToFile(connection);
+            result = appendToFile(connection);
+        }
+        break;
+    case 1:
+        result = sendFileToClient(connection);
+        break;
+    }
+
+    return result;
+}
+
+bool FileServer::recieveSizeOfFile(Socket & connection)
+{
+    int receivedBytes = -1;
+    int retries = 100;
+    while(retries && receivedBytes <= 0)
+    {
+        //cout << "line: 95 - recieveSizeOfFile\n";
+        receivedBytes = connection.recv(&info.sizeOfFile, sizeof(uint64_t));
+
+        if (receivedBytes == 0)
+        {
+            cout << "Connection to remote client closed" << endl;
+            return false;
+        }
+        else if (receivedBytes == -1)
+        {
+            this_thread::sleep_for(chrono::milliseconds(1)); // give client time to receive size
+            --retries;
         }
     }
 
-    else
-    {
-        sendFileToClient(connection);
-    }
-
-
-#ifdef C_WIN_SOCK
-	closesocket(connection);
-#else
-	close(connection);
-#endif
-
-    return true/*TODO*/;
-}
-
-bool FileServer::recieveSizeOfFile(int connection)
-{
-    uint64_t receivedBytes;
-    while(1)
-    {
-        //cout << "line: 95 - recieveSizeOfFile\n";
-        receivedBytes = ::recv(
-            connection,
-            reinterpret_cast<char *>(&info.sizeOfFile),
-            sizeof(uint64_t),
-            0);
-            if(receivedBytes != -1) break;
+    if (!retries) {
+        cout << "Failed to receive size of file" << endl;
+        return false;
     }
 
     if(receivedBytes)
@@ -111,10 +118,10 @@ bool FileServer::recieveSizeOfFile(int connection)
     return receivedBytes;
 }
 
-uint64_t FileServer::initialAppend(int connection)
+bool FileServer::initialAppend(Socket & connection)
 {
 
-    uint64_t writtenBytes = 0;
+    int writtenBytes = 0;
     if (recieveSizeOfFile(connection))
     {
         fclose(fd);
@@ -125,94 +132,115 @@ uint64_t FileServer::initialAppend(int connection)
         }
 
         writtenBytes = fwrite(&info, sizeof(InfoData), 1, fd);
-
     }
 
-    return writtenBytes;
+    return writtenBytes == 1;
 }
 
-int FileServer::appendToFile(int connection)
+bool FileServer::appendToFile(Socket & connection)
 {
     int readBytes = -1;
     uint64_t sizeOfFile = info.sizeOfFile;
-
-    while(sizeOfFile)
+    int retries = 100;
+    while(sizeOfFile && retries)
     {
-        readBytes = ::recv(connection, buffer.get(), SIZE_BUFFER, 0);
+        readBytes = connection.recv(buffer.get(), SIZE_BUFFER);
 
 		if (readBytes == -1)
 		{
+            --retries;
+            this_thread::sleep_for(chrono::milliseconds(1)); // give it time to receive data
 		    //cout << "line 136\n";
 			continue;
-		}
+        } else if (readBytes == 0)
+        {
+            cout << "Connection to client closed while receiveing file" << endl;
+            return false;
+        }
 
         fwrite(buffer.get(), sizeof(char), readBytes, fd);
-
+        if (sizeOfFile < readBytes) {
+            cout << "Failed to append to file - wrong file size - would inf loop" << endl;
+            return false;
+        }
         sizeOfFile -= readBytes;
     }
 
     fileSize += info.sizeOfFile;
-    while(1)
+    retries = 100;
+    while(--retries)
     {
-        if(-1 != ::send(connection, reinterpret_cast<const char *>(&info.id), sizeof(uint64_t), 0))
+        if(sizeof(uint64_t) == connection.send(&info.id, sizeof(uint64_t)))
         {
             break;
         }
         //cout << "Send line: 152\n";
+        this_thread::sleep_for(chrono::milliseconds(1)); // give client time to receive id
+    }
+
+    if (!retries) {
+        std::cerr << "Failed to send file ID to client" << endl;
+        return false;
     }
 
     if (readBytes < 0)
     {
         std::cerr << "ERROR writing to socket";
+        return false;
+    }
+    return true;
+}
+
+bool FileServer::sendInfoFileToClient(Socket & connection)
+{
+    int retries = 100;
+    while(--retries)
+    {
+        if (sizeof(uint64_t) == connection.send(&info.sizeOfFile, sizeof(uint64_t)))
+        {
+            return true;
+        }
+        this_thread::sleep_for(chrono::milliseconds(1)); // give client time to receive size
+        //cout << "Send line: 174\n";
     }
     return false;
 }
 
-void FileServer::sendInfoFileToClient(int newfd)
+uint64_t FileServer::getIdByClient(Socket & connection)
 {
-    while(1)
+    uint64_t id = 0;
+
+    int retries = 100;
+	while(--retries && sizeof(uint64_t) != connection.recv(&id, sizeof(uint64_t)))
     {
-        if( -1 != ::send(
-                        newfd,
-                        reinterpret_cast<const char *>(&info.sizeOfFile),
-                        sizeof(uint64_t),
-                        0) )
-        {
-            break;
-        }
-        //cout << "Send line: 174\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-}
-
-uint64_t FileServer::getIdByClient(int connection)
-{
-    uint64_t id;
-
-	while(-1 == ::recv(connection, reinterpret_cast<char*>(&id), sizeof(uint64_t), 0))
-    {
-        //cout << "Send line: 184\n";
-    }
-
-
+    
     return id;
 }
 
-void FileServer::sendFileToClient(int newfd)
+bool FileServer::sendFileToClient(Socket & connection)
 {
 
-    uint64_t id = getIdByClient(newfd);
+    uint64_t id = getIdByClient(connection);
 
     uint64_t bytesToTransfer = seek2File(id);
 
     if(bytesToTransfer == 0)
     {
         cout << "ERROR: you are trying to get file with wrong id!!!\n";
-        return;
+        return false;
     }
 
-    while(-1 == ::send(newfd, reinterpret_cast<const char*>(&bytesToTransfer), sizeof(uint64_t), 0))
+    int retries = 100;
+    while (--retries && sizeof(uint64_t) != connection.send(&bytesToTransfer, sizeof(uint64_t)))
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         //cout << "Send line: 205\n";
+    }
+
+    if (!retries) {
+        return false;
     }
 
 
@@ -220,36 +248,54 @@ void FileServer::sendFileToClient(int newfd)
     while(bytesToTransfer > 0)
     {
 
-        uint64_t readBytes = fread(buffer.get(), sizeof(char), SIZE_BUFFER, this->fd);
+        int readBytes = fread(buffer.get(), sizeof(char), SIZE_BUFFER, this->fd);
 
-        if ( ferror(fd) )
+        if ( ferror(fd) || readBytes < 0 )
         {
-            cerr << "ERROR";
+            cout << "Failed to read from db file" << endl;
+            return false;
         }
-
         else if ( feof(fd) )
         {
             break;
         }
+        else if (-1 == readBytes)
+        {
+            continue;
+        }
 
-        else if(-1 == readBytes) continue;
-
+        if (bytesToTransfer < readBytes) {
+            cout << "Wrong sent size - would go into inf loop" << endl;
+            return false;
+        }
         bytesToTransfer -= readBytes;
+
+
         while(readBytes > 0)
         {
-            int sentBytes = ::send(newfd, buffer.get(), readBytes, 0);
-            if(sentBytes == -1) continue;
+            int sentBytes = connection.send(buffer.get(), readBytes);
+            if (sentBytes == -1)
+            {
+                continue;
+            }
 
+            if (readBytes < sentBytes)
+            {
+                cout << "Failed to send bytes from db to client" << endl;
+                return false;
+            }
             readBytes -= sentBytes;
         }
 
         if(bytesToTransfer > 0 && bytesToTransfer < SIZE_BUFFER) // TODO
         {
             fread(buffer.get(), sizeof(char), bytesToTransfer, fd);
-            ::send(newfd, buffer.get(), bytesToTransfer, 0);
+            connection.send(buffer.get(), bytesToTransfer);
             break;
         }
     }
+
+    return true;
 }
 
 
@@ -262,7 +308,6 @@ uint64_t FileServer::seek2File(uint64_t id)
 	fd = fopen(dbFilePath.c_str(), "ab+");
     fseek(fd, 0, SEEK_SET);
 
-	// TODO: fix this, randomly loops forever
     while(currentSize > 0)
     {
         auto read = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
@@ -271,6 +316,8 @@ uint64_t FileServer::seek2File(uint64_t id)
             return 0;
         }
 
+        currentSize -= sizeof(InfoData);
+
         if(id == data.id)
         {
             return data.sizeOfFile;
@@ -278,19 +325,30 @@ uint64_t FileServer::seek2File(uint64_t id)
 
         auto seek = fseek(fd, data.sizeOfFile, SEEK_CUR);
 
-        currentSize -= data.sizeOfFile + sizeof(InfoData);
+        if (currentSize < data.sizeOfFile) {
+            cout << "Failed to read data structure from db" << endl;
+            return 0;
+        }
+
+        currentSize -= data.sizeOfFile;
     }
 
     return 0;
 }
 
-uint64_t FileServer::eventType(int connection)
+uint64_t FileServer::eventType(Socket & connection)
 {
-    uint64_t type;
-
-    while(-1 == ::recv( connection, reinterpret_cast<char *>(&type), sizeof(uint64_t), 0))
+    uint64_t type = -1;
+    int retries = 100;
+    while(--retries && sizeof(uint64_t) != connection.recv(&type, sizeof(uint64_t)))
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // give the client time to send type
         //cout << "Send line: 275\n";
+    }
+
+    if (!retries) {
+        cout << "Failed to receive event type from client" << endl;
+        return -1;
     }
 
     return type;
@@ -317,7 +375,9 @@ void FileServer::run()
 
     while(isRun)
     {
-        receive();
+        if (!receive()) {
+            cout << "Failed to server user action" << endl;
+        }
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
@@ -340,21 +400,26 @@ void FileServer::recoverServer()
 
     fseek(fd, 0, SEEK_SET);
 
-	// TODO: fix this, randomly loops forever
     while(file_sz)
     {
 
         readBytes = fread(reinterpret_cast<char*>(&data), sizeof(InfoData), 1, fd);
-        if(!readBytes)
+        if(readBytes != 1)
         {
-            cout << "Can't read InfoData structure !!!\n";
+            cout << "Can't read InfoData structure - failed read" << endl;
             exit(1);
         }
 
+        file_sz -= sizeof(InfoData);
+
         fseek(fd, data.sizeOfFile, SEEK_CUR);
 
-        file_sz -= data.sizeOfFile + sizeof(InfoData);
+        if (file_sz < data.sizeOfFile) {
+            cout << "Can't read InfoData structure - broken file" << endl;
+            exit(1);
+        }
 
+        file_sz -= data.sizeOfFile;
         all_ids.push_back(data.id);
     }
     setNextFreeId();
