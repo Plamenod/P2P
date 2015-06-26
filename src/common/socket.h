@@ -56,10 +56,10 @@ public:
     Socket acceptSocket();
 
     bool wouldHaveBlocked();
+    void close();
 
 private:
     sockaddr_in getSockAddr();
-    void close();
     void setBlockFlag();
     void clearBlockFlag();
 
