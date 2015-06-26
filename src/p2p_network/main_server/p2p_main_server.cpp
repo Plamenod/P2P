@@ -134,18 +134,36 @@ void P2PMainServer::checkPeers(std::vector<ServerInfo> & connected_peers, int ou
         if (clients[i].server_port == 0 || i == out_peer_index) {
             continue;
         }
-        //Socket sock;
-        //sockaddr_in addr = clients[i].addr;
-        //addr.sin_port = htons(clients[i].server_port);
-        /**connect to returns -1 on failure*/
-        //if(sock.connectTo(&addr) != -1) {
-        //    continue;
-        //}
 
-        temp.ip_addr = clients[i].sock.getPeerAddress();
-        temp.server_port = clients[i].server_port;
-        temp.file_mgr_port = clients[i].file_mgr_port;
-        connected_peers.push_back(temp);
+        Command cmd = Command::PING;
+
+        int sent = clients[i].sock.send(&cmd, sizeof(cmd));
+        if (sent == sizeof(cmd)) {
+            Command response;
+            int recv = -1, retries = 10;
+
+            while (--retries && -1 == (recv = clients[i].sock.recv(&response, sizeof(response)))) {
+                // give some time the client to reps to ping
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+
+            if (recv == sizeof(response)) {
+                if (response == Command::PONG) {
+
+                    temp.ip_addr = clients[i].sock.getPeerAddress();
+                    temp.server_port = clients[i].server_port;
+                    temp.file_mgr_port = clients[i].file_mgr_port;
+
+                    connected_peers.push_back(temp);
+                } else {
+                    // TODO: disconnect - unexpected rsponse to PING
+                }
+            } else {
+                // TODO: client received ping but failed to respond - disconnect
+            }
+        } else {
+            // TODO: maybe dicsconnect peers
+        }
     }
 }
 
