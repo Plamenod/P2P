@@ -234,7 +234,7 @@ void Socket::close()
 #ifdef C_WIN_SOCK
         closesocket(this->fd);
 #else
-        close(this->fd);
+        ::close(this->fd);
 #endif
         this->fd = INVALID_SOCKFD;
     }
