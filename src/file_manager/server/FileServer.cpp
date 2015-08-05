@@ -185,7 +185,7 @@ bool FileServer::appendToFile(Socket & connection)
 
     if (readBytes < 0)
     {
-        std::cerr << "ERROR writing to socket";
+        std::cerr << "ERROR writing to socket" << endl;
         return false;
     }
     return true;
