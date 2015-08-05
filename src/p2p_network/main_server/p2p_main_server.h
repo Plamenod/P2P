@@ -10,10 +10,34 @@
 #define INITIAL_CLIENTS_COUNT 64
 
 class P2PMainServer{
+
     struct ClientDescriptor {
         Socket sock;
         uint16_t server_port, file_mgr_port;
+
+        ClientDescriptor(ClientDescriptor && o)
+            : sock(std::move(o.sock)), server_port(o.server_port),
+            file_mgr_port(o.file_mgr_port) {}
+
+        ClientDescriptor(Socket sock, uint16_t sp, uint16_t fmp)
+            : sock(std::move(sock)), server_port(sp), file_mgr_port(fmp) {}
+
+        ClientDescriptor & operator=(ClientDescriptor && o) {
+            if (this == &o) {
+                return *this;
+            }
+
+            sock = std::move(o.sock);
+            server_port = o.server_port;
+            file_mgr_port = o.file_mgr_port;
+
+            return *this;
+        }
+
+        ClientDescriptor(const ClientDescriptor &) = delete;
+        ClientDescriptor & operator=(const ClientDescriptor &) = delete;
     };
+
 
 public:
     P2PMainServer(): isRunning(false) { clients.reserve(INITIAL_CLIENTS_COUNT); };
@@ -24,7 +48,7 @@ public:
     ~P2PMainServer() {};
 
     void start(int port);
-	void stop();
+    void stop();
 
 private:
 
@@ -35,7 +59,7 @@ private:
     void checkPeers(std::vector<ServerInfo>& connected_peers, int out_peer_index);
 
 
-	bool isRunning;
+    bool isRunning;
     Socket socket;
     uint16_t port;
     std::vector<ClientDescriptor> clients;

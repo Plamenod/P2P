@@ -53,7 +53,7 @@ void P2PMainServer::handleClientConnect(Socket & client)
             exit(1);
         }
 
-        this->clients.emplace_back(ClientDescriptor{ std::move(client), 0, 0 });
+        this->clients.emplace_back(ClientDescriptor(std::move(client), 0, 0));
     }
 }
 
