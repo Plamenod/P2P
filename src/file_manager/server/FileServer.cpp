@@ -126,7 +126,7 @@ bool FileServer::initialAppend(Socket & connection)
     {
         fclose(fd);
 
-		fd = fopen(dbFilePath.c_str(), "ab+");
+        fd = fopen(dbFileName, "ab+");
         if (!fd) {
             return 0;
         }
